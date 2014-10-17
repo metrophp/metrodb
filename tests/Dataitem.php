@@ -1,9 +1,8 @@
 <?php
 
 include_once(dirname(__FILE__).'/../dataitem.php');
-include_once('src/nofw/associate.php');
 
-class Metrodb_Tests_Dataitem extends UnitTestCase { 
+class Metrodb_Tests_Dataitem extends PHPUnit_Framework_TestCase { 
 
 
 	public function setUp() {
@@ -12,9 +11,9 @@ class Metrodb_Tests_Dataitem extends UnitTestCase {
 	public function test_TableNamesandPkey() {
 		$di = new Metrodb_Dataitem('foo', 'foo_bar');
 
-		$this->assertEqual('foo',       $di->getKind());
-		$this->assertEqual('foo_bar',   $di->_pkey);
-		$this->assertEqual(NULL,        $di->getPrimaryKey());
+		$this->assertEquals('foo',       $di->getKind());
+		$this->assertEquals('foo_bar',   $di->_pkey);
+		$this->assertEquals(NULL,        $di->getPrimaryKey());
 	}
 
 	public function test_IsNew() {
@@ -33,6 +32,6 @@ class Metrodb_Tests_Dataitem extends UnitTestCase {
 		$di->echoSelect();
 		$out = ob_get_contents();
 		ob_end_clean();
-		$this->assertEqual($expectedString, $out);
+		$this->assertEquals($expectedString, $out);
 	}
 }

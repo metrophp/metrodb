@@ -5,8 +5,8 @@
  */
 class Metrodb_Connector {
 
-	public function resources(&$request) {
-		associate_iAmA('dataitem', 'metrodb/dataitem.php');
+	public function resources($request) {
+		associate_iAmA('dataitem',  'metrodb/dataitem.php');
 		associate_iAmA('datamodel', 'metrodb/datamodel.php');
 	}
 
@@ -20,6 +20,8 @@ class Metrodb_Connector {
 	 * there are no more records
 	 */
 	public $resultSet = array();
+
+	public static $listDsn   = array();
 
 	// current *_fetch_array()-result.
 	public $record = array();
@@ -114,25 +116,54 @@ class Metrodb_Connector {
 		return $connList[$dsn];
 	}
 
+	public static function setDsn($dsn, $url) {
+		self::$listDsn[$dsn] = $url;
+	}
+
+	public static function getDsn($dsn) {
+		if (function_exists('associate_get')) {
+			return associate_get($dsn.".dsn");
+		}
+		if (array_key_exists($dsn,  self::$listDsn)) {
+			return self::$listDsn[$dsn];
+		}
+		return NULL;
+	}
+
+	public static function loadDriver($driver) {
+		if (function_exists('associate_getMeA')) {
+			if (!class_exists('Metrodb_'.$driver, false)) {
+				associate_iAmA($driver, 'metrodb/'.$driver.'.php');
+			}
+			return associate_getMeA($driver);
+		} else {
+			$className = 'Metrodb_'.$driver;
+			if (class_exists('Metrodb_'.$driver, true)) {
+				return new $className;
+			} else {
+				include_once( dirname(__FILE__).'/'.$driver.'.php');
+				return new $className;
+			}
+			return NULL;
+		}
+	}
+
 	/**
 	 * Create a new database connection from the given DSN and store it 
 	 * internally in "connList" array.
 	 */
-	public function createHandle($dsn='default') {
-		$t = associate_get($dsn.".dsn");
+	public static function createHandle($dsn='default') {
+		$t = Metrodb_Connector::getDsn($dsn);
+
 		if ( $t === NULL ) {
 			return false;
 		}
 
-
 		$_dsn = parse_url($t);
 
 		//make sure the driver is loaded
-		$driver = $_dsn['scheme'];
-		if (!class_exists('Metrodb_'.$driver, false)) {
-			associate_iAmA($driver, 'metrodb/'.$driver.'.php');
-		}
-		$driver = associate_getMeA($driver);
+		$driverName = $_dsn['scheme'];
+		$driver = self::loadDriver($driverName);
 		$driver->host = $_dsn['host'];
 		$driver->database = substr($_dsn['path'],1);
 		$driver->user = $_dsn['user'];
