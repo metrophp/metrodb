@@ -362,8 +362,16 @@ class Metrodb_Connector {
 	public function getNumRows() {}
 
 
+	public function execute($query) {
+		return $this->executeQuery($query);
+	}
+
 	public function executeQuery($query) {
-		return $this->query($query->toString());
+		if (is_object($query)) {
+			return $this->query($query->toString());
+		} else {
+			return $this->query($query);
+		}
 	}
 
 	/**
