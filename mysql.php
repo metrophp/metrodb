@@ -5,6 +5,7 @@ class Metrodb_Mysql extends Metrodb_Connector {
 	public $RESULT_TYPE = MYSQL_ASSOC;
 	public $persistent = 'n';
 	public $isSelected = false;
+	public $port       = 3306;
 
 	/**
 	 * Connect to the DB server
@@ -17,10 +18,12 @@ class Metrodb_Mysql extends Metrodb_Connector {
 			return false;
 		}
 		if ($this->driverId == 0 ) {
+			$host = $this->host;
+			$host .= ':'.$this->port;
 			if ($this->persistent == 'y') {
-				$this->driverId = @mysql_pconnect($this->host, $this->user, $this->password, TRUE);
+				$this->driverId = @mysql_pconnect($host, $this->user, $this->password, TRUE);
 			} else {
-				$this->driverId = @mysql_connect($this->host, $this->user, $this->password, TRUE);
+				$this->driverId = @mysql_connect($host, $this->user, $this->password, TRUE);
 			}
 			if (!$this->driverId) {
 				throw new Exception("Unable to connect to database");

@@ -168,6 +168,10 @@ class Metrodb_Connector {
 		$driver->database = substr($_dsn['path'],1);
 		$driver->user = $_dsn['user'];
 		$driver->password = @$_dsn['pass'];
+
+		if (array_key_exists('port', $_dsn)) {
+			$driver->port = $_dsn['port'];
+		}
 		$driver->connect();
 
 		Metrodb_Connector::$connList[$dsn] = $driver;
