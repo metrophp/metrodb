@@ -445,7 +445,7 @@ class Metrodb_Dataitem {
 			$this->{$this->_pkey} = $where;
 		}
 		if ( isset($this->{$this->_pkey}) ) {
-			$whereQ = $this->_pkey .' = "'.$this->{$this->_pkey}.'"';
+			$whereQ = $this->_pkey .' = \''.$this->{$this->_pkey}.'\'';
 		}
 		return $db->query( $this->buildDelete($whereQ) );
 	}
@@ -665,7 +665,7 @@ class Metrodb_Dataitem {
 
 		if (is_string($v) && $v !== 'NULL' && $q) {
 
-			$atom .= '"'.addslashes($v).'" ';
+			$atom .= '\''.addslashes($v).'\' ';
 		} else if ( is_int($v) || is_float($v)) {
 			$atom .= $v.' ';
 		} else if (is_array($v) && ($s == 'IN' || $s == 'NOT IN')) {
@@ -677,7 +677,7 @@ class Metrodb_Dataitem {
 		} else if ($v === NULL) {
 			$atom .= 'NULL'.' ';
 		} else if ($q) {
-			$atom .= '"'.addslashes($v).'" ';
+			$atom .= '\''.addslashes($v).'\' ';
 		} else {
 			$atom .= ' '.$v. ' ';
 		}
