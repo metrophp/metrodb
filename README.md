@@ -4,6 +4,29 @@ Model first or code first PHP ORM.
 
 Can be used stand-alone or as a library in [nofw](https://github.com/markkimsal/nofw) - the no framework framework.
 
+Installation with composer
+=====
+This project is not on packagist, so you have to add a repository (because composer can't guess it correctly?)
+
+```
+    "repositories": [ 
+        { 
+            "type": "vcs",
+            "url": "https://github.com/markkimsal/metrodb.git"
+        } 
+    ],
+```
+Then add the dependency as you normally would.
+
+```
+    "require": {
+        "php": ">= 5.3.7",
+        "metro/metrodb": "~1.0.1"
+    },
+```
+
+
+
 Usage
 =====
 Only one line of setup is required to start using metrodb.
