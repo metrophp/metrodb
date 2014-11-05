@@ -55,7 +55,7 @@ class Metrodb_Datamodel {
 	 * For any undefined attribute call set() on $this->dataItem
 	 */
 	public function __set($key, $val) {
-		return $this->dataItem->get($key, $val);
+		return $this->dataItem->set($key, $val);
 	}
 
 	/**
