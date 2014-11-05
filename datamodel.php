@@ -81,6 +81,16 @@ class Metrodb_Datamodel {
 		}
 	}
 
+	public function find($where='') {
+		$list = $this->dataItem->find($where);
+		$class = get_class($this);
+		foreach ($list as $_k => $_v) {
+			$model = new $class(NULL, $_v);
+			$list[$_k] = $model;
+		}
+		return $list;
+	}
+
 	/**
 	 * Load the internal dataItem using the $id
 	 *
