@@ -23,6 +23,6 @@ class Metrodb_Tests_Connector extends PHPUnit_Framework_TestCase {
 		Metrodb_Connector::setDsn('default', $url);
 		$db = Metrodb_Connector::getHandle('default');
 		$this->assertTrue(is_object($db));
-		$this->assertEquals('metrodb_mysql', get_class($db));
+		$this->assertEquals('metrodb_mysql', strtolower(get_class($db)));
 	}
 }
