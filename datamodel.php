@@ -1,4 +1,6 @@
 <?php
+include_once(dirname(__FILE__).'/dataitem.php');
+
 /**
  * This class wraps a Metrodb_Dataitem and adds per row and per table user permissions.
  *
@@ -35,9 +37,9 @@ class Metrodb_Datamodel {
 
 	public $dataItem     = NULL;
 
-	public function __construct($id=NULL) {
+	public function __construct($id=NULL, $dataItem=NULL) {
 		if ($this->tableName !== '') {
-			$this->initDataItem();
+			$this->setDataItem($dataItem);
 		}
 		if ($id !== NULL) {
 			$this->load($id);
@@ -71,8 +73,12 @@ class Metrodb_Datamodel {
 	 * Requires $this->tableName to be set.  Called from constructor
 	 *
 	 */
-	public function initDataItem() {
-		$this->dataItem = associate_getMeANew('dataitem', $this->tableName);
+	public function setDataItem($di) {
+		$this->dataItem = $di;
+		if ($di === NULL) {
+			//$this->dataItem = associate_getMeANew('dataitem', $this->tableName);
+			$this->dataItem = new Metrodb_Dataitem($this->tableName);
+		}
 	}
 
 	/**
@@ -80,8 +86,21 @@ class Metrodb_Datamodel {
 	 *
 	 * @param $id int Unique id
 	 */
-	public function load($id) {
-		$u = associate_getMeA('user');
+	public function load($id, $u=NULL) {
+		if ($u !== NULL) {
+			if (!$this->addSharingClauseRead($u)) {
+				return FALSE;
+			}
+		}
+		//load failed
+		if (!$this->dataItem->load($id)) {
+			return FALSE;
+		}
+		//load succeeded, but no permission
+		return $this->dataItem->getPrimaryKey() != 0;
+	}
+
+	public function addSharingClauseRead($u) {
 		switch ($this->sharingModeRead) {
 			//where group id in a list of group
 			case 'same-group':
@@ -108,14 +127,8 @@ class Metrodb_Datamodel {
 				break;
 
 			case 'registered':
-				if ($u->isAnonymous()) { return false; }
+				if ($u->isAnonymous()) { return FALSE; }
 		}
-
-		//load failed
-		if (!$this->dataItem->load($id)) {
-			return FALSE;
-		}
-		//load succeeded, but no permission
-		return $this->dataItem->getPrimaryKey() != 0;
+		return TRUE;
 	}
 }
