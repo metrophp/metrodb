@@ -77,8 +77,15 @@ class Metrodb_Datamodel {
 		$this->dataItem = $di;
 		if ($di === NULL) {
 			//$this->dataItem = associate_getMeANew('dataitem', $this->tableName);
-			$this->dataItem = new Metrodb_Dataitem($this->tableName);
+			$this->dataItem = $this->createDataItem();
 		}
+	}
+
+	/**
+	 * create a new dataitem
+	 */
+	public function createDataItem() {
+		return new Metrodb_Dataitem($this->tableName);
 	}
 
 	public function find($where='') {
