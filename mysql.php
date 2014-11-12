@@ -259,6 +259,20 @@ class Metrodb_Mysql extends Metrodb_Connector {
 		return $this->errorMessage;
 	}
 
+	public function rollbackTx() {
+		$this->exec("ROLLBACK");
+		$this->exec("SET autocommit=1");
+	}
+
+	public function startTx() {
+		$this->exec("SET autocommit=0");
+		$this->exec("START TRANSACTION");
+	}
+
+	public function commitTx() {
+		$this->exec("COMMIT TRANSACTION");
+		$this->exec("SET autocommit=1");
+	}
 
 	/**
 	 * Return the last identity field to be created

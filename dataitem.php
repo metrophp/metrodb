@@ -141,6 +141,21 @@ class Metrodb_Dataitem {
 		}
 	}
 
+	public function startTx() {
+		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$db->startTx();
+	}
+
+	public function commitTx() {
+		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$db->commitTx();
+	}
+
+	public function rollbackTx() {
+		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$db->rollbackTx();
+	}
+
 	/**
 	 * Insert or update
 	 *

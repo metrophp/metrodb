@@ -361,9 +361,24 @@ class Metrodb_Connector {
 	 */
 	public function getNumRows() {}
 
+	/**
+	 * for commands like "set FLAG=1" or "BEGIN TRANSACTION"
+	 * @see executeStatement($stmt)
+	 */
+	public function execute($stmt) {
+		return $this->executeStatement($stmt);
+	}
 
-	public function execute($query) {
-		return $this->executeQuery($query);
+	/**
+	 * for commands like "set FLAG=1" or "BEGIN TRANSACTION"
+	 * @param $stmt mixed either String or Object with toString()
+	 */
+	public function executeStatement($stmt) {
+		if (is_object($stmt)) {
+			return $this->exec($stmt->toString());
+		} else {
+			return $this->exec($stmt);
+		}
 	}
 
 	public function executeQuery($query) {
@@ -381,6 +396,18 @@ class Metrodb_Connector {
 	 */
 	public function getTableColumns($table) {
 		return array();
+	}
+
+	public function rollbackTx() {
+		$this->exec("ROLLBACK TRANSACTION");
+	}
+
+	public function startTx() {
+		$this->exec("BEGIN TRANSACTION");
+	}
+
+	public function commitTx() {
+		$this->exec("COMMIT TRANSACTION");
 	}
 
 	/**
