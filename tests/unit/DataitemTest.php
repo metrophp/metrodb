@@ -1,6 +1,6 @@
 <?php
 
-include_once(dirname(__FILE__).'/../dataitem.php');
+include_once(dirname(__FILE__).'/../../dataitem.php');
 
 class Metrodb_Tests_Dataitem extends PHPUnit_Framework_TestCase { 
 

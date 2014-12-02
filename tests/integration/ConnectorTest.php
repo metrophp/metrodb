@@ -1,6 +1,6 @@
 <?php
 
-include_once(dirname(__FILE__).'/../connector.php');
+include_once(dirname(__FILE__).'/../../connector.php');
 
 class Metrodb_Tests_Connector extends PHPUnit_Framework_TestCase {
 
@@ -21,7 +21,12 @@ class Metrodb_Tests_Connector extends PHPUnit_Framework_TestCase {
 	public function test_get_driver() {
 		$url = 'mysql://foo@bar/dbname';
 		Metrodb_Connector::setDsn('default', $url);
-		$db = Metrodb_Connector::getHandle('default');
+		try {
+			$db = Metrodb_Connector::getHandle('default');
+		} catch (Exception $e ) {
+			//unable to connect
+			$db = NULL;
+		}
 		$this->assertTrue(is_object($db));
 		$this->assertEquals('metrodb_mysql', strtolower(get_class($db)));
 	}
