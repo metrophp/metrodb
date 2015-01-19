@@ -16,7 +16,7 @@ class Metrodb_Mssql extends Metrodb_Connector {
 	 * Uses the classes internal host,user,password, and database variables
 	 * @return void
 	 */
-	public function connect() {
+	public function connect($options) {
 		if (! function_exists('mssql_connect')) {
 			return false;
 		}
@@ -36,6 +36,7 @@ class Metrodb_Mssql extends Metrodb_Connector {
 				// __TODO__ perhaps we should throw an error and eat it up somewhere else?
 				$this->isSelected = true;
 			}
+			$this->setOptions($options);
 		}
 	}
 

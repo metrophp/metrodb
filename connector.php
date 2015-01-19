@@ -175,12 +175,16 @@ class Metrodb_Connector {
 		$driver->database = substr($_dsn['path'],1);
 		$driver->user = $_dsn['user'];
 		$driver->password = @$_dsn['pass'];
+		$options = array();
+		if (array_key_exists('query', $_dsn)) {
+			parse_str($_dsn['query'], $options);
+		}
 
 		if (array_key_exists('port', $_dsn)) {
 			$driver->port = $_dsn['port'];
 		}
 		try {
-			$driver->connect();
+			$driver->connect($options);
 		} catch (Exception $e) {
 			//probably database not available.
 		}
@@ -189,6 +193,20 @@ class Metrodb_Connector {
 		return true;
 	}
 
+	/**
+	 * Call set* for every key in the array
+	 * The array is made from query params to the DSN
+	 * mysql://user:pw@localhost:3306/dbname?opt&opt2
+	 * will call $this->setOpt() and $this->setOpt2()
+	 */
+	public function setOptions($options) {
+		foreach ($options as $_key => $_val) {
+			$method = 'set'.ucfirst($_key);
+			if (is_callable(array($this, $method))) {
+				call_user_func( array($this, $method));
+			}
+		}
+	}
 
 	/**
 	 * Connect to the DB server
@@ -198,7 +216,7 @@ class Metrodb_Connector {
 	 *
 	 * @abstract
 	 */
-	public function connect() {}
+	public function connect($options) {}
 
 
 	/**
