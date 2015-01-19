@@ -847,9 +847,9 @@ class Metrodb_Dataitem {
 
 		$cols = $db->getTableColumns($this->_table);
 		if (!$cols) {
-			$sqlDefs = $this->dynamicCreateSql();
+			$sqlDefs = $db->dynamicCreateSql($this);
 		} else {
-			$sqlDefs = $this->dynamicAlterSql($cols);
+			$sqlDefs = $db->dynamicAlterSql($cols, $this);
 		}
 		foreach ($sqlDefs as $sql) {
 			$db->query($sql);
@@ -868,9 +868,9 @@ class Metrodb_Dataitem {
 
 		$cols = $db->getTableColumns($this->_table);
 		if (!$cols) {
-			$sqlDefs = $this->dynamicCreateSql();
+			$sqlDefs = $db->dynamicCreateSql($this);
 		} else {
-			$sqlDefs = $this->dynamicAlterSql($cols);
+			$sqlDefs = $db->dynamicAlterSql($cols, $this);
 		}
 		foreach ($sqlDefs as $sql) {
 			$db->query($sql);
@@ -881,151 +881,4 @@ class Metrodb_Dataitem {
 		return $db->query($this->buildInsert());
 	}
 
-	public function dynamicCreateSql() {
-		$sql = "";
-		//$props = $this->__get_props();
-		$finalTypes = array();
-
-		$vars = get_object_vars($this);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($this->_pkey) && $k === $this->_pkey && $vars[$k] == NULL ) {continue;}
-			if (array_key_exists($k, $this->_typeMap)) {
-				$finalTypes[$k] = $this->_typeMap[$k];
-			} else {
-				$finalTypes[$k] = "string";
-			}
-		}
-
-		/**
-		 * build SQL
-		 */
-		$sql = "CREATE TABLE IF NOT EXISTS `".$this->_table."` ( \n";
-
-		$sqlDefs[] = $this->_pkey." int(11) unsigned auto_increment primary key";
-
-		foreach($finalTypes as $propName=>$type) {
-			switch($type) {
-			case "email":
-				$sqlDefs[$propName] = "$propName varchar(255)";
-				break;
-			case "ts":
-				$sqlDefs[$propName] = "$propName int(11) unsigned NULL DEFAULT NULL";
-				break;
-			case "int":
-				$sqlDefs[$propName] = "$propName int(11) NULL";
-				break;
-			case "text":
-				$sqlDefs[$propName] = "$propName longtext NULL";
-				break;
-			case "lob":
-				$sqlDefs[$propName] = "$propName longblob NULL";
-				break;
-			case "date":
-				$sqlDefs[$propName] = "$propName datetime NULL";
-				break;
-			default:
-				$sqlDefs[$propName] = "$propName varchar(255)";
-				break;
-
-			}
-		}
-
-		if (! isset($sqlDefs['created_on'])) {
-			$sqlDefs[] = "created_on int unsigned NULL";
-		}
-		if (! isset($sqlDefs['updated_on'])) {
-			$sqlDefs[] = "updated_on int unsigned NULL";
-		}
-
-//    	$sqlDefs[] = 'PRIMARY KEY(`'.$this->_pkey.'`)';
-//		$sqlDefs[] = "created_on datetime NULL";
-//		$sqlDefs[] = "updated_on datetime NULL";
-
-		$sql .= implode(",\n",$sqlDefs);
-		$sql .= "\n) ENGINE=INNODB;";
-
-		$sqlStmt = array($sql,  "ALTER TABLE `".$this->_table."` COLLATE utf8_general_ci");
-		return $sqlStmt;
-	}
-
-	/**
-	 * Create a number of SQL statements which will
-	 * update the existing table to the required spec.
-	 */
-	public function dynamicAlterSql($cols) {
-		$sqlDefs = array();
-		$finalTypes = array();
-
-		$colNames = array();
-		foreach ($cols as $_col) {
-			$colNames[] = $_col['name'];
-		}
-//		$colNames = $cols['name'];
-		//if there are no column names, then the table doesn't exist
-//		if (!$colNames) $colNames = array();
-		$finalTypes = array();
-		$vars = get_object_vars($this);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($this->_pkey) && $k === $this->_pkey && $vars[$k] == NULL ) {continue;}
-			if (in_array($k, $colNames)) {
-				//we don't need to alter existing columsn
-				continue;
-			}
-			if (array_key_exists($k, $this->_typeMap)) {
-				$finalTypes[$k] = $this->_typeMap[$k];
-			} else {
-				$finalTypes[$k] = "string";
-			}
-		}
-
-		/**
-		 * build SQL
-		 */
-		foreach($finalTypes as $propName=>$type) {
-			switch($type) {
-			case "email":
-				$sqlDefs[] = "ALTER TABLE `".$this->_table."` 
-					ADD COLUMN `".$propName."` VARCHAR(255)  NULL DEFAULT NULL; \n";
-				break;
-			case "ts":
-				$sqlDefs[] = "ALTER TABLE `".$this->_table."` 
-					ADD COLUMN `".$propName."` int(11) unsigned NULL DEFAULT NULL; \n";
-				break;
-			case "int":
-				$sqlDefs[] = "ALTER TABLE `".$this->_table."` 
-					ADD COLUMN `".$propName."` int(11) NULL DEFAULT NULL; \n";
-				break;
-			case "text":
-				$sqlDefs[] = "ALTER TABLE `".$this->_table."` 
-					ADD COLUMN `".$propName."` longtext NULL; \n";
-				break;
-			case "lob":
-				$sqlDefs[] = "ALTER TABLE `".$this->_table."` 
-					ADD COLUMN `".$propName."` longblob NULL; \n";
-				break;
-			case "date":
-				$sqlDefs[] = "ALTER TABLE `".$this->_table."` 
-					ADD COLUMN `".$propName."` datetime NULL DEFAULT NULL; \n";
-				break;
-			default:
-				$sqlDefs[] = "ALTER TABLE `".$this->_table."` 
-					ADD COLUMN `".$propName."` VARCHAR(255) NULL DEFAULT NULL; \n";
-				break;
-
-			}
-		}
-
-		$sqlDefs[] = "\n\nALTER TABLE `".$this->_table."` COLLATE utf8_general_ci";
-		return $sqlDefs;
-	}
 }

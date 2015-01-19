@@ -6,6 +6,9 @@ class Metrodb_Mysql extends Metrodb_Connector {
 	public $persistent = 'n';
 	public $isSelected = false;
 	public $port       = 3306;
+	public $qc = '"';
+	public $collation = 'COLLATE utf8_general_ci';
+	public $tableOtps = 'ENGINE=INNODB';
 
 	/**
 	 * Connect to the DB server
@@ -34,6 +37,7 @@ class Metrodb_Mysql extends Metrodb_Connector {
 				// __TODO__ perhaps we should throw an error and eat it up somewhere else?
 				$this->isSelected = true;
 			}
+			$this->exec('SET SQL_MODE = \'ANSI_QUOTES\'');
 		}
 	}
 

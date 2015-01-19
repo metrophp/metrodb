@@ -5,6 +5,10 @@
  */
 class Metrodb_Connector {
 
+	public $qc = '"';
+	public $collation = '';
+	public $tableOpts = '';
+
 	public function resources($request) {
 		associate_iAmA('dataitem',  'metrodb/dataitem.php');
 		associate_iAmA('datamodel', 'metrodb/datamodel.php');
@@ -16,7 +20,7 @@ class Metrodb_Connector {
 	public $driverId = 0;
 
 	/**
-	 * List of result sets that stack until 
+	 * List of result sets that stack until
 	 * there are no more records
 	 */
 	public $resultSet = array();
@@ -74,6 +78,9 @@ class Metrodb_Connector {
 			}
 		}
 		$x =& Metrodb_Connector::$connList[$dsn];
+		if (!$x) {
+			return FALSE;
+		}
 
 		// optimize the next two lines by only executing them on PHP5
 		// 4 already makes a shallow copy.
@@ -149,7 +156,7 @@ class Metrodb_Connector {
 	}
 
 	/**
-	 * Create a new database connection from the given DSN and store it 
+	 * Create a new database connection from the given DSN and store it
 	 * internally in "connList" array.
 	 */
 	public static function createHandle($dsn='default') {
@@ -172,7 +179,11 @@ class Metrodb_Connector {
 		if (array_key_exists('port', $_dsn)) {
 			$driver->port = $_dsn['port'];
 		}
-		$driver->connect();
+		try {
+			$driver->connect();
+		} catch (Exception $e) {
+			//probably database not available.
+		}
 
 		Metrodb_Connector::$connList[$dsn] = $driver;
 		return true;
@@ -260,7 +271,7 @@ class Metrodb_Connector {
 		return $this->queryGetAll($query);
 	}
 
-	public function queryGetAll($query, $report=TRUE) { 
+	public function queryGetAll($query, $report=TRUE) {
 		$this->query($query, $report);
 		$rows = array();
 		while($this->nextRecord()) {
@@ -276,7 +287,7 @@ class Metrodb_Connector {
 		}
 		return $rows;
 	}
- 
+
 	/**
 	 * Short hand way to send a select statement.
 	 *
@@ -421,8 +432,9 @@ class Metrodb_Connector {
 	 * @return array stream handle with info needed for nextChunk()
 	 */
 	public function prepareBlobStream($table, $col, $id, $pct=10, $idcol='') {
+		$qc = $this->qc;
 		if ($idcol == '') {$idcol = $table.'_id';}
-		$this->queryOne('SELECT CHAR_LENGTH(`'.$col.'`) as `bitlen` from `'.$table.'` WHERE `'.$idcol.'` = '.sprintf('
+		$this->queryOne('SELECT CHAR_LENGTH('.$qc.$col.$qc.') as bitlen from '.$qc.$table.$qc.' WHERE '.$qc.$idcol.$qc.' = '.sprintf('
 			%d',$id));
 		$ticket = array();
 		$ticket['table'] = $table;
@@ -445,6 +457,7 @@ class Metrodb_Connector {
 	 */
 	public function nextStreamChunk(&$ticket) {
 		if ($ticket['finished']) { return false; }
+		$qc = $this->qc;
 
 		$_x = (floor($ticket['pctdone']/$ticket['pct']) * $ticket['byteeach']) + 1;
 		$_s = $ticket['byteeach'];
@@ -456,16 +469,173 @@ class Metrodb_Connector {
 		if ($ticket['pctdone'] + $ticket['pct'] >= 100) {
 			//grab the uneven bits with this last pull
 			$_s += $ticket['bytelast'];
-			$this->queryOne('SELECT SUBSTR(`'.$ticket['col'].'`,'.$_x.') 
-				AS `blobstream` FROM '.$ticket['table'].' WHERE `'.$ticket['idcol'].'` = '.sprintf('%d',$ticket['id']));
+			$this->queryOne('SELECT SUBSTR('.$qc.$ticket['col'].$qc.','.$_x.') 
+				AS '.$qc.'blobstream'.$qc.' FROM '.$ticket['table'].' WHERE '.$qc.$ticket['idcol'].$qc.' = '.sprintf('%d',$ticket['id']));
 		} else {
-			$this->queryOne('SELECT SUBSTR(`'.$ticket['col'].'`,'.$_x.','.$_s.') 
-				AS `blobstream` FROM '.$ticket['table'].' WHERE `'.$ticket['idcol'].'` = '.sprintf('%d',$ticket['id']));
+			$this->queryOne('SELECT SUBSTR('.$qc.$ticket['col'].$qc.','.$_x.','.$_s.') 
+				AS '.$qc.'blobstream'.$qc.' FROM '.$ticket['table'].' WHERE '.$qc.$ticket['idcol'].$qc.' = '.sprintf('%d',$ticket['id']));
 		}
 		$ticket['pctdone'] += $ticket['pct'];
 		if ($ticket['pctdone'] >= 100) { 
 			$ticket['finished'] = TRUE;
 		}
 		return $this->record['blobstream'];
+	}
+
+	/**
+	 * Create a number of SQL statements which will
+	 * update the existing table to the required spec.
+	 */
+	public function dynamicAlterSql($cols, $dataitem) {
+		$sqlDefs = array();
+		$finalTypes = array();
+
+		$colNames = array();
+		foreach ($cols as $_col) {
+			$colNames[] = $_col['name'];
+		}
+
+		$finalTypes = array();
+		$vars = get_object_vars($dataitem);
+		$keys = array_keys($vars);
+		$fields = array();
+		$values = array();
+		foreach ($keys as $k) {
+			if (substr($k,0,1) == '_') { continue; }
+			//fix for SQLITE
+			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
+			if (in_array($k, $colNames)) {
+				//we don't need to alter existing columsn
+				continue;
+			}
+			if (array_key_exists($k, $dataitem->_typeMap)) {
+				$finalTypes[$k] = $dataitem->_typeMap[$k];
+			} else {
+				$finalTypes[$k] = "string";
+			}
+		}
+
+		/**
+		 * build SQL
+		 */
+		foreach($finalTypes as $propName=>$type) {
+			$propName  = $this->qc.$propName.$this->qc;
+			$tableName = $this->qc.$dataitem->_table.$this->qc;
+			switch($type) {
+			case "email":
+				$sqlDefs[] = "ALTER TABLE $tableName
+					ADD COLUMN $propName VARCHAR(255)  NULL DEFAULT NULL; \n";
+				break;
+			case "ts":
+				$sqlDefs[] = "ALTER TABLE $tableName
+					ADD COLUMN $propName int(11) unsigned NULL DEFAULT NULL; \n";
+				break;
+			case "int":
+				$sqlDefs[] = "ALTER TABLE $tableName
+					ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
+				break;
+			case "text":
+				$sqlDefs[] = "ALTER TABLE $tableName
+					ADD COLUMN $propName longtext NULL; \n";
+				break;
+			case "lob":
+				$sqlDefs[] = "ALTER TABLE $tableName
+					ADD COLUMN $propName longblob NULL; \n";
+				break;
+			case "date":
+				$sqlDefs[] = "ALTER TABLE $tableName
+					ADD COLUMN $propName datetime NULL DEFAULT NULL; \n";
+				break;
+			default:
+				$sqlDefs[] = "ALTER TABLE $tableName
+					ADD COLUMN $propName VARCHAR(255) NULL DEFAULT NULL; \n";
+				break;
+
+			}
+		}
+
+		if ($this->collation != '') {
+			$sqlDefs[] = "\n\nALTER TABLE $tableName ".$this->collation.";";
+		}
+
+		return $sqlDefs;
+	}
+
+	public function dynamicCreateSql($dataitem) {
+		$sql = "";
+		//$props = $dataitem->__get_props();
+		$finalTypes = array();
+
+		$vars = get_object_vars($dataitem);
+		$keys = array_keys($vars);
+		$fields = array();
+		$values = array();
+		foreach ($keys as $k) {
+			if (substr($k,0,1) == '_') { continue; }
+			//fix for SQLITE
+			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
+			if (array_key_exists($k, $dataitem->_typeMap)) {
+				$finalTypes[$k] = $dataitem->_typeMap[$k];
+			} else {
+				$finalTypes[$k] = "string";
+			}
+		}
+
+		$tableName = $this->qc.$dataitem->_table.$this->qc;
+		/**
+		 * build SQL
+		 */
+		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
+
+		$sqlDefs[] = $dataitem->_pkey." int(11) unsigned auto_increment primary key";
+
+		foreach($finalTypes as $propName=>$type) {
+			$propName = $this->qc.$propName.$this->qc;
+			switch($type) {
+			case "email":
+				$sqlDefs[$propName] = "$propName varchar(255)";
+				break;
+			case "ts":
+				$sqlDefs[$propName] = "$propName int(11) unsigned NULL DEFAULT NULL";
+				break;
+			case "int":
+				$sqlDefs[$propName] = "$propName int(11) NULL";
+				break;
+			case "text":
+				$sqlDefs[$propName] = "$propName longtext NULL";
+				break;
+			case "lob":
+				$sqlDefs[$propName] = "$propName longblob NULL";
+				break;
+			case "date":
+				$sqlDefs[$propName] = "$propName datetime NULL";
+				break;
+			default:
+				$sqlDefs[$propName] = "$propName varchar(255)";
+				break;
+
+			}
+		}
+
+		if (! isset($sqlDefs['created_on'])) {
+			$sqlDefs[] = "created_on int unsigned NULL";
+		}
+		if (! isset($sqlDefs['updated_on'])) {
+			$sqlDefs[] = "updated_on int unsigned NULL";
+		}
+
+//    	$sqlDefs[] = 'PRIMARY KEY('.$dataitem->_pkey.')';
+//		$sqlDefs[] = "created_on datetime NULL";
+//		$sqlDefs[] = "updated_on datetime NULL";
+
+		$sql .= implode(",\n",$sqlDefs);
+		$sql .= "\n) ". $this->tableOpts.";";
+
+		if ($this->collation != '') {
+			$sqlStmt = array($sql,  "ALTER TABLE $tableName ".$this->collation);
+		} else {
+			$sqlStmt = array($sql);
+		}
+		return $sqlStmt;
 	}
 }
