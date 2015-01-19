@@ -7,7 +7,6 @@ class Metrodb_Tests_Integration_Dataitem extends PHPUnit_Framework_TestCase {
 
 
 	public function setUp() {
-		Metrodb_Connector::setDsn('default', 'mysql://docker:mysql@192.168.2.65:3309/metrodb_test');
 	}
 
 	public function test_save_new_dataitem() {
