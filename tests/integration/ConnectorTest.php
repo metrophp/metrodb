@@ -10,8 +10,8 @@ class Metrodb_Tests_Connector extends PHPUnit_Framework_TestCase {
 
 	public function test_get_dsn() {
 		$url = 'mysql://foo@bar/dbname';
-		Metrodb_Connector::setDsn('default', $url);
-		$url2 = Metrodb_Connector::getDsn('default');
+		Metrodb_Connector::setDsn('dummy1', $url);
+		$url2 = Metrodb_Connector::getDsn('dummy1');
 		$this->assertEquals($url, $url2);
 
 		$url3 = Metrodb_Connector::getDsn('write');
@@ -20,9 +20,9 @@ class Metrodb_Tests_Connector extends PHPUnit_Framework_TestCase {
 
 	public function test_get_driver() {
 		$url = 'mysql://foo@bar/dbname';
-		Metrodb_Connector::setDsn('default', $url);
+		Metrodb_Connector::setDsn('dummy2', $url);
 		try {
-			$db = Metrodb_Connector::getHandle('default');
+			$db = Metrodb_Connector::getHandle('dummy2');
 		} catch (Exception $e ) {
 			//unable to connect
 			$db = NULL;
