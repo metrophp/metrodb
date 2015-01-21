@@ -63,7 +63,7 @@ class Metrodb_Connector {
 	 *  the globally configured defaultDatabaseLayer in the object store
 	 * @return  object  copy of a db object that has the settings of a DSN entry
 	 */
-	static public function &getHandle($dsn = 'default', $table='') {
+	static public function getHandle($dsn = 'default', $table='') {
 		if ($dsn == NULL && $table != '') {
 			$dsn = Metrodb_Connector::dsnForTable($table);
 		}
