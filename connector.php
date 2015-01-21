@@ -605,7 +605,9 @@ class Metrodb_Connector {
 		 */
 		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
 
-		$sqlDefs[] = $dataitem->_pkey." int(11) unsigned auto_increment primary key";
+		if (! array_key_exists($dataitem->_pkey, $finalTypes)) {
+			$sqlDefs[] = $dataitem->_pkey." int(11) unsigned auto_increment primary key";
+		}
 
 		foreach($finalTypes as $propName=>$type) {
 			$propName = $this->qc.$propName.$this->qc;
