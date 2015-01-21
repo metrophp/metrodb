@@ -533,12 +533,12 @@ class Metrodb_Connector {
 			}
 		}
 
+		$tableName = $this->qc.$dataitem->_table.$this->qc;
 		/**
 		 * build SQL
 		 */
 		foreach($finalTypes as $propName=>$type) {
 			$propName  = $this->qc.$propName.$this->qc;
-			$tableName = $this->qc.$dataitem->_table.$this->qc;
 			switch($type) {
 			case "email":
 				$sqlDefs[] = "ALTER TABLE $tableName
