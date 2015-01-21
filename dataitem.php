@@ -604,7 +604,7 @@ class Metrodb_Dataitem {
 			//$sql .= $atom .' LIMIT 1';
 			$sql .= $atom;
 		} else {
-			$sql .= ' WHERE '.$this->_pkey .' = '.$this->{$this->_pkey};//.' LIMIT 1';
+			$sql .= ' WHERE '.$this->_pkey .' = \''.$this->{$this->_pkey}.'\'';//.' LIMIT 1';
 		}
 		return $sql;
 	}
