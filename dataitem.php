@@ -16,11 +16,6 @@
 
 class Metrodb_Dataitem {
 
-	public function resources(&$request) {
-
-	}
-
-
 	public $_table;
 	public $_pkey;
 	public $_relatedMany   = array();
@@ -39,7 +34,6 @@ class Metrodb_Dataitem {
 	public $_filterNames   = TRUE;
 	public $_tblPrefix     = '';
 	public $_isNew         = FALSE;
-	public $_debugSql      = FALSE;
 	public $_rsltByPkey    = FALSE;
 	//	public $_dsnName       = 'default';
 
@@ -55,11 +49,10 @@ class Metrodb_Dataitem {
 	 * @see load
 	 * @see find
 	 */
-	public function __construct($t,$pkey='') {
+	public function __construct($t, $pkey='') {
 		$this->_table = $t;
-		if ($pkey === NULL) {
-			//we don't want 1 auto-increment primary key
-		} else {
+		//if pkey is null we don't want 1 auto-increment primary key
+		if ($pkey !== NULL) {
 			$this->_pkey = $pkey;
 			if (!$this->_pkey) {
 				//if we didn't specify, we just have ''
@@ -165,56 +158,32 @@ class Metrodb_Dataitem {
 		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 
 		if ( $this->_isNew ) {
-			if ($this->_debugSql) {
-				var_dump( $this->buildInsert() );
-			}
-
 			if (!$db->query( $this->buildInsert(), FALSE )) {
 				$err = $db->errorMessage;
-//				$errObj = Metrofw_ErrorStack::pullError();
 				if (!$this->dynamicResave($db)) {
-					//pulling the db error hides the specifics of the SQL
-/*					if (Metrofw_ErrorStack::pullError()) {
-						Metrofw_ErrorStack::throwError("Cannot save data item.\n".
-							$err, E_USER_WARNING);
-					}
- */
-					return false;
+					return FALSE;
 				}
 			}
+			$this->_isNew = FALSE;
 			if (!isset($this->_pkey) || $this->_pkey === NULL) {
-				//do nothing
-				$this->_isNew = false;
+				//don't return a pkey if none is defined
 				return TRUE;
 			} else {
 				$this->{$this->_pkey} = $db->getInsertId();
 			}
-			$this->_isNew = false;
 		} else {
-			if ($this->_debugSql) {
-				var_dump( $this->buildUpdate() );
-			}
-
 			if (!$db->query( $this->buildUpdate(), FALSE )) {
 				$err = $db->errorMessage;
-//				$errObj = Metrofw_ErrorStack::pullError();
 				// TRUE performs buildUpdate instead of buildInsert
 				if (!$this->dynamicResave($db, TRUE)) {
-					//pulling the db error hides the specifics of the SQL
-/*					if (Metrofw_ErrorStack::pullError()) {
-						Metrofw_ErrorStack::throwError("Cannot save data item.\n".
-							$err, E_USER_WARNING);
-					}
- */
-					return false;
+					return FALSE;
 				}
 			}
+			$this->_isNew = FALSE;
 			if (!isset($this->_pkey) || $this->_pkey === NULL) {
-				//do nothing
-				$this->_isNew = false;
+				//don't return a pkey if none is defined
 				return TRUE;
 			}
-
 		}
 		return $this->{$this->_pkey};
 	}
@@ -259,9 +228,6 @@ class Metrodb_Dataitem {
 			$whereQ .= $atom;
 		}
 
-		if ($this->_debugSql) {
-			var_dump( $this->buildSelect($whereQ) );
-		}
 		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
 			$err = $db->errorMessage;
 //			$errObj = Metrofw_ErrorStack::pullError();
@@ -304,10 +270,6 @@ class Metrodb_Dataitem {
 				$this->andWhere($_k, $_v);
 			}
 		}
-		if ($this->_debugSql) {
-			var_dump( $this->buildSelect() );
-		}
-
 		$db->query( $this->buildSelect() );
 		if(!$db->nextRecord()) {
 			return false;
@@ -339,20 +301,9 @@ class Metrodb_Dataitem {
 		} else if (strlen($where) ) {
 			$whereQ = $this->_pkey .' = '.$where;
 		 */
-		if ($this->_debugSql) {
-			var_dump( $this->buildSelect($whereQ) );
-		}
-
 		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
 			$err = $db->errorMessage;
-//			$errObj = Metrofw_ErrorStack::pullError();
 			if (!$this->dynamicReload($db, $whereQ)) {
-				//pulling the db error hides the specifics of the SQL
-/*				if (Metrofw_ErrorStack::pullError()) {
-					Metrofw_ErrorStack::throwError("Cannot load data item.\n".
-						$err, E_USER_WARNING);
-				}
- */
 				return array();
 			}
 		}
@@ -403,10 +354,6 @@ class Metrodb_Dataitem {
 		} else if (strlen($where) ) {
 			$whereQ = $this->_pkey .' = '.$where;
 		 */
-		if ($this->_debugSql) {
-			var_dump( $this->buildSelect($whereQ) );
-		}
-
 		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
 			$err = $db->errorMessage;
 //			$errObj = Metrofw_ErrorStack::pullError();
@@ -472,10 +419,6 @@ class Metrodb_Dataitem {
 			$whereQ = implode(' and ',$where);
 		} else if (strlen($where) ) {
 			$whereQ = $this->_pkey .' = '.$where;
-		}
-
-		if ($this->_debugSql) {
-			var_dump( $this->buildCountSelect($whereQ) );
 		}
 
 		$db->query( $this->buildCountSelect($whereQ) );
@@ -706,7 +649,7 @@ class Metrodb_Dataitem {
 		$sortQ = '';
 		foreach ($this->_sort as $col=>$acdc) {
 			if (strlen($sortQ) ) {$sortQ .= ', ';}
-			$sortQ .= ' '.$col.' '.$acdc;
+			$sortQ .= $col.' '.$acdc;
 		}
 		return 'ORDER BY '.$sortQ;
 	}

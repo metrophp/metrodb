@@ -49,4 +49,17 @@ class Metrodb_Tests_Dataitem extends PHPUnit_Framework_TestCase {
 		$values = $di->valuesAsArray();
 		$this->assertEquals($expected, $values);
 	}
+
+	public function test_build_sort() {
+		$di = new Metrodb_Dataitem('foo');
+		$di->sort('colA');
+		$clause = $di->buildSort();
+
+		$this->assertEquals('ORDER BY colA DESC', $clause);
+
+
+		$di->sort('colB', 'ASC');
+		$clause = $di->buildSort();
+		$this->assertEquals('ORDER BY colA DESC, colB ASC', $clause);
+	}
 }
