@@ -10,8 +10,8 @@ class Metrodb_Connector {
 	public $tableOpts = '';
 
 	public function resources($request) {
-		associate_iAmA('dataitem',  'metrodb/dataitem.php');
-		associate_iAmA('datamodel', 'metrodb/datamodel.php');
+		_didef('dataitem',  'metrodb/dataitem.php');
+		_didef('datamodel', 'metrodb/datamodel.php');
 	}
 
 	/**
@@ -128,8 +128,8 @@ class Metrodb_Connector {
 	}
 
 	public static function getDsn($dsn) {
-		if (function_exists('associate_get')) {
-			return associate_get($dsn.".dsn");
+		if (function_exists('_get')) {
+			return _get($dsn.".dsn");
 		}
 		if (array_key_exists($dsn,  self::$listDsn)) {
 			return self::$listDsn[$dsn];
@@ -138,11 +138,11 @@ class Metrodb_Connector {
 	}
 
 	public static function loadDriver($driver) {
-		if (function_exists('associate_getMeA')) {
+		if (function_exists('_make')) {
 			if (!class_exists('Metrodb_'.$driver, false)) {
-				associate_iAmA($driver, 'metrodb/'.$driver.'.php');
+				_didef($driver, 'metrodb/'.$driver.'.php');
 			}
-			return associate_getMeA($driver);
+			return _make($driver);
 		} else {
 			$className = 'Metrodb_'.$driver;
 			if (class_exists('Metrodb_'.$driver, true)) {
