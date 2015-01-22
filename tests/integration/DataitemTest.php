@@ -41,6 +41,24 @@ class Metrodb_Tests_Integration_Dataitem extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(0, count($listAnswer));
 	}
 
+	public function test_update_existing_item() {
+		$di = new Metrodb_Dataitem('foo', 'foo_bar');
+
+		$di->column1 = 'value_a';
+		$x = $di->save();
+
+		$this->assertFalse(!$x);
+
+		$di->column1 = 'value_b';
+		$x = $di->save();
+
+		$finder = new Metrodb_Dataitem('foo', 'foo_bar');
+		$finder->andWhere('column1', 'value_b');
+		$listAnswer = $finder->findAsArray();
+
+		$this->assertEquals('value_b', $listAnswer[0]['column1']);
+	}
+
 	public function tearDown() {
 		$db = Metrodb_Connector::getHandle('default');
 		$db->execute('TRUNCATE "foo"');
