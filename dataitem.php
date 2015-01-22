@@ -477,6 +477,7 @@ class Metrodb_Dataitem {
 	}
 
 	public function buildInsert() {
+		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 		$vars = get_object_vars($this);
 		$keys = array_keys($vars);
 
@@ -489,8 +490,7 @@ class Metrodb_Dataitem {
 			if (isset($this->_pkey) && $k === $this->_pkey && $vars[$k] == NULL ) {continue;}
 			$fields[] = $k;
 			if ( in_array($k, $this->_bins) ) {
-				//__ FIXME __ do not force mysql in this library.
-				$values[] = "_binary'".mysql_real_escape_string($vars[$k])."'\n";
+				$values[] = $db->escapeBinaryValue($vars[$k]);//"_binary'".mysql_real_escape_string($vars[$k])."'\n";
 			} else if (in_array($k,$this->_nuls) && $vars[$k] == NULL ) {
 				//intentionally doing a double equals here, 
 				// if the col is nullabe, try real hard to insert a NULL
@@ -499,12 +499,12 @@ class Metrodb_Dataitem {
 			} else {
 				//add slashes works just like mysql_real_escape_string
 				// (for latin1 and UTF-8) but is faster and testable.
-				$values[] = "'".addslashes($vars[$k])."'\n";
+				$values[] = $db->escapeCharValue($vars[$k])."\n";//;"'".addslashes($vars[$k])."'\n";
 			}
 		}
 
 		return "INSERT INTO ".$this->getTable()." \n".
-			' (`'.implode("`,\n`",$fields).'`) '."\n".
+			' ("'.implode("\",\n\"",$fields).'") '."\n".
 			'VALUES ('.implode(',',$values).') ';
 	}
 
@@ -516,6 +516,7 @@ class Metrodb_Dataitem {
 	 * will be considered unique.
 	 */
 	public function buildUpdate() {
+		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 		$sql = "UPDATE ".$this->getTable()." SET \n";
 		$vars = get_object_vars($this);
 		$keys = array_keys($vars);
@@ -526,12 +527,11 @@ class Metrodb_Dataitem {
 			if (substr($k,0,1) == '_') { continue; }
 			if (strlen($set) ) { $set .= ', ';}
 			if ( in_array($k,$this->_bins) ) {
-				//__ FIXME __ do not force mysql in this library.
-				$set .= "`$k` = _binary'".mysql_real_escape_string($vars[$k])."'\n";
+				$set .= "\"$k\" = ".$db->escapeBinaryValue($vars[$k])."\n";
 			}else if (in_array($k,$this->_nuls) && $vars[$k] == NULL ) {
-				$set .= "`$k` = NULL\n";
+				$set .= "\"$k\" = NULL\n";
 			} else {
-				$set .= "`$k` = '".addslashes($vars[$k])."'\n";
+				$set .= "\"$k\" = ".$db->escapeCharValue($vars[$k])."\n";
 			}
 		}
 		$sql .= $set;

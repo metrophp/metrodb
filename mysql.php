@@ -403,4 +403,17 @@ class Metrodb_Mysql extends Metrodb_Connector {
 	function quote($val) {
 		return mysql_real_escape_string($val);
 	}
+
+	public function escapeCharValue($val) {
+		return "'".addslashes(
+			$val
+		)."'";
+	}
+
+	public function escapeBinaryValue($val) {
+		return '_binary\''.addcslashes(
+			$val,
+			"\x00\'\"\r\n"
+		).'\'';
+	}
 }
