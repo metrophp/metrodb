@@ -5,7 +5,7 @@
  */
 class Metrodb_Connector {
 
-	public $qc = '"';
+	public $qc        = '"';
 	public $collation = '';
 	public $tableOpts = '';
 

@@ -3,12 +3,12 @@
 class Metrodb_Mssql extends Metrodb_Connector {
 
 	public $RESULT_TYPE = MYSQL_ASSOC;
-	public $persistent = 'n';
-	public $isSelected = false;
-	protected $_start  = -1;
-	protected $_limit  = -1;
-	public $type = 'mssql';
-	public $escape = '"';
+	public $persistent  = 'n';
+	public $isSelected  = false;
+	protected $_start   = -1;
+	protected $_limit   = -1;
+	public $type        = 'mssql';
+	public $escape      = '"';
 
 	/**
 	 * Connect to the DB server

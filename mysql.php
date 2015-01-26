@@ -3,12 +3,12 @@
 class Metrodb_Mysql extends Metrodb_Connector {
 
 	public $RESULT_TYPE = MYSQL_ASSOC;
-	public $persistent = 'n';
-	public $isSelected = false;
-	public $port       = 3306;
-	public $qc = '`';
-	public $collation = 'COLLATE utf8_general_ci';
-	public $tableOtps = 'ENGINE=INNODB';
+	public $persistent  = 'n';
+	public $isSelected  = false;
+	public $port        = 3306;
+	public $qc          = '`';
+	public $collation   = 'COLLATE utf8_general_ci';
+	public $tableOtps   = 'ENGINE=INNODB';
 
 	/**
 	 * Connect to the DB server
