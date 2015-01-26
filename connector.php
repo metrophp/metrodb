@@ -128,13 +128,14 @@ class Metrodb_Connector {
 	}
 
 	public static function getDsn($dsn) {
+		$x = NULL;
 		if (function_exists('_get')) {
-			return _get($dsn.".dsn");
+			$x = _get($dsn.".dsn", NULL);
 		}
-		if (array_key_exists($dsn,  self::$listDsn)) {
+		if (!$x && array_key_exists($dsn,  self::$listDsn)) {
 			return self::$listDsn[$dsn];
 		}
-		return NULL;
+		return $x;
 	}
 
 	public static function loadDriver($driver) {
