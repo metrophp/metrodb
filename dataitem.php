@@ -463,12 +463,12 @@ class Metrodb_Dataitem {
 		} else {
 			$cols = '*';
 		}
-		return "SELECT ".$cols." FROM ".$this->getTable()." ".$this->buildJoin(). " ".$this->buildWhere($whereQ). " ". $this->buildSort(). " ". $this->buildGroup() ." " . $this->buildLimit();
+		return "SELECT ".$cols." FROM ".$this->getTable()." ".$this->buildJoin(). " ".$this->buildWhere($whereQ). " ". $this->buildGroup(). " ". $this->buildSort() ." " . $this->buildLimit();
 	}
 
 	public function buildCountSelect($whereQ='') {
 		$cols = 'count(*) as total_rec';
-		return "SELECT ".$cols." FROM ".$this->getTable()." ".$this->buildJoin(). " ".$this->buildWhere($whereQ). " ". $this->buildSort(). " ". $this->buildGroup() ;
+		return "SELECT ".$cols." FROM ".$this->getTable()." ".$this->buildJoin(). " ".$this->buildWhere($whereQ). " ". $this->buildGroup(). " ". $this->buildSort() ;
 	}
 
 
