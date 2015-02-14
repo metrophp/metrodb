@@ -65,6 +65,18 @@ class Metrodb_Dataitem {
 	}
 
 	/**
+	 * Quiet warnings on some PHP systems by
+	 * doing what should be done when an empty
+	 * key is accessed anyway.
+	 */
+    public function __get($key) { 
+        if (!isset($this->{$key})) {
+            return NULL;
+        }
+        return $this->{$key};
+    }
+
+	/**
 	 * Return all the values as an array
 	 */
 	public function valuesAsArray() {
