@@ -2,7 +2,7 @@ metrodb
 =======
 Model first or code first PHP ORM.
 
-Can be used stand-alone or as a library in [nofw](https://github.com/markkimsal/nofw) - the no framework framework.
+Can be used stand-alone or as a library in [Metro PHP](https://github.com/metrophp).
 
 Installation with composer
 =====
