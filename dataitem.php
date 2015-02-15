@@ -493,9 +493,6 @@ class Metrodb_Dataitem {
 		$vars = get_object_vars($this);
 		$keys = array_keys($vars);
 
-		//set 'created_on' and 'edited_on' automatically
-		$fields = array('created_on', 'updated_on');
-		$values = array(time(), time());
 		foreach ($keys as $k) {
 			if (substr($k,0,1) == '_') { continue; }
 			//fix for SQLITE
@@ -513,6 +510,15 @@ class Metrodb_Dataitem {
 				// (for latin1 and UTF-8) but is faster and testable.
 				$values[] = $db->escapeCharValue($vars[$k])."\n";//;"'".addslashes($vars[$k])."'\n";
 			}
+		}
+		//set 'created_on' and 'updated_on' automatically
+		if (!in_array('created_on', $fields)) {
+			$fields[] = 'created_on';
+			$values[] = time();
+		}
+		if (!in_array('updated_on', $fields)) {
+			$fields[] = 'updated_on';
+			$values[] = time();
 		}
 
 		return "INSERT INTO ".$this->getTable()." \n".
