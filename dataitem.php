@@ -522,7 +522,7 @@ class Metrodb_Dataitem {
 		}
 
 		return "INSERT INTO ".$this->getTable()." \n".
-			' ("'.implode("\",\n\"",$fields).'") '."\n".
+			' (' . $db->qc .implode($db->qc . ",\n" . $db->qc ,$fields). $db->qc . ') '."\n".
 			'VALUES ('.implode(',',$values).') ';
 	}
 
@@ -545,11 +545,11 @@ class Metrodb_Dataitem {
 			if (substr($k,0,1) == '_') { continue; }
 			if (strlen($set) ) { $set .= ', ';}
 			if ( in_array($k,$this->_bins) ) {
-				$set .= "\"$k\" = ".$db->escapeBinaryValue($vars[$k])."\n";
+				$set .= $db->qc.$k.$db->qc ." = ".$db->escapeBinaryValue($vars[$k])."\n";
 			}else if (in_array($k,$this->_nuls) && $vars[$k] == NULL ) {
-				$set .= "\"$k\" = NULL\n";
+				$set .= $db->qc.$k.$db->qc. " = NULL\n";
 			} else {
-				$set .= "\"$k\" = ".$db->escapeCharValue($vars[$k])."\n";
+				$set .= $db->qc.$k.$db->qc . " = ".$db->escapeCharValue($vars[$k])."\n";
 			}
 		}
 		$sql .= $set;
