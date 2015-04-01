@@ -1,10 +1,15 @@
-<phpunit bootstrap="./tests/bootstrap.php" colors="true" verbose="true">
-    <testsuites>
-        <testsuite name="metrodb unit tests">
-            <directory>./tests/unit</directory>
-        </testsuite>
-        <testsuite name="metrodb integration tests">
-            <directory>./tests/integration</directory>
-        </testsuite>
-    </testsuites>
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/4.4/phpunit.xsd"
+	backupGlobals="true"
+	backupStaticAttributes="false"
+	bootstrap="tests/bootstrap.php">
+	<testsuites>
+		<testsuite name="Metrodb Unit Tests">
+			<directory>tests/unit/</directory>
+		</testsuite>
+		<testsuite name="Metrodb Integration Tests">
+			<directory>tests/integration/</directory>
+		</testsuite>
+	</testsuites>
 </phpunit>
