@@ -27,7 +27,7 @@ class Metrodb_Tests_Integration_Dataitem extends PHPUnit_Framework_TestCase {
 	public function test_delete_dataitem() {
 		$di = new Metrodb_Dataitem('foo', 'foo_bar');
 
-		$di->column1 = 'value_a';
+		$di->column1 = 'value_d';
 		$x = $di->save();
 
 		$this->assertFalse(!$x);
@@ -35,7 +35,7 @@ class Metrodb_Tests_Integration_Dataitem extends PHPUnit_Framework_TestCase {
 		$di->delete();
 
 		$finder = new Metrodb_Dataitem('foo', 'foo_bar');
-		$finder->andWhere('column1', 'value_a');
+		$finder->andWhere('column1', 'value_d');
 		$listAnswer = $finder->findAsArray();
 
 		$this->assertEquals(0, count($listAnswer));
