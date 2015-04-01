@@ -1,0 +1,10 @@
+<phpunit bootstrap="./tests/bootstrap.php" colors="true" verbose="true">
+    <testsuites>
+        <testsuite name="metrodb unit tests">
+            <directory>./tests/unit</directory>
+        </testsuite>
+        <testsuite name="metrodb integration tests">
+            <directory>./tests/integration</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
