@@ -46,6 +46,7 @@ class Metrodb_Tests_Integration_Dataitem extends PHPUnit_Framework_TestCase {
 
 		$di->column1 = 'value_a';
 		$x = $di->save();
+        $updatedOn = $di->updated_on;
 
 		$this->assertFalse(!$x);
 
@@ -57,6 +58,7 @@ class Metrodb_Tests_Integration_Dataitem extends PHPUnit_Framework_TestCase {
 		$listAnswer = $finder->findAsArray();
 
 		$this->assertEquals('value_b', $listAnswer[0]['column1']);
+        $this->assertTrue($updatedOn <= $listAnswer[0]['updated_on']);
 	}
 
 	public function test_insert_binary() {
