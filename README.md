@@ -12,7 +12,7 @@ This project is not on packagist, so you have to add a repository (because compo
     "repositories": [ 
         { 
             "type": "vcs",
-            "url": "https://github.com/markkimsal/metrodb.git"
+            "url": "https://github.com/metrophp/metrodb.git"
         } 
     ],
 ```
@@ -21,7 +21,7 @@ Then add the dependency as you normally would.
 ```
     "require": {
         "php": ">= 5.3.7",
-        "metro/metrodb": "~1.0.1"
+        "metro/metrodb": ">=1.3.6"
     },
 ```
 
