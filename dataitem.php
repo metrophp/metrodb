@@ -489,7 +489,8 @@ class Metrodb_Dataitem {
 	}
 
 	public function buildInsert() {
-		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$db   = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$qc   = $db->qc;
 		$vars = get_object_vars($this);
 		$keys = array_keys($vars);
 
@@ -522,7 +523,7 @@ class Metrodb_Dataitem {
 		}
 
 		return "INSERT INTO ".$this->getTable()." \n".
-			' (' . $db->qc .implode($db->qc . ",\n" . $db->qc ,$fields). $db->qc . ') '."\n".
+			' (' . $qc .implode($qc . ",\n" . $qc ,$fields). $qc . ') '."\n".
 			'VALUES ('.implode(',',$values).') ';
 	}
 
@@ -534,22 +535,23 @@ class Metrodb_Dataitem {
 	 * will be considered unique.
 	 */
 	public function buildUpdate() {
-		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
-		$sql = "UPDATE ".$this->getTable()." SET \n";
-		$vars = get_object_vars($this);
-		$keys = array_keys($vars);
+		$db     = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$qc     = $db->qc;
+		$sql    = "UPDATE ".$this->getTable()." SET \n";
+		$vars   = get_object_vars($this);
+		$keys   = array_keys($vars);
 		$fields = array();
 		$values = array();
-		$set = '';
+		$set    = '';
 		foreach ($keys as $k) {
 			if (substr($k,0,1) == '_') { continue; }
 			if (strlen($set) ) { $set .= ', ';}
 			if ( in_array($k,$this->_bins) ) {
-				$set .= $db->qc.$k.$db->qc ." = ".$db->escapeBinaryValue($vars[$k])."\n";
+				$set .= $qc.$k.$qc ." = ".$db->escapeBinaryValue($vars[$k])."\n";
 			}else if (in_array($k,$this->_nuls) && $vars[$k] == NULL ) {
-				$set .= $db->qc.$k.$db->qc. " = NULL\n";
+				$set .= $qc.$k.$qc. " = NULL\n";
 			} else {
-				$set .= $db->qc.$k.$db->qc . " = ".$db->escapeCharValue($vars[$k])."\n";
+				$set .= $qc.$k.$qc . " = ".$db->escapeCharValue($vars[$k])."\n";
 			}
 		}
 		$sql .= $set;
