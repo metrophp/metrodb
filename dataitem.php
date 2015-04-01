@@ -513,13 +513,18 @@ class Metrodb_Dataitem {
 			}
 		}
 		//set 'created_on' and 'updated_on' automatically
+		//#metadata
 		if (!in_array('created_on', $fields)) {
 			$fields[] = 'created_on';
-			$values[] = time();
+			$time = time();
+			$values[] = $time;
+			$this->set('created_on', $time);
 		}
 		if (!in_array('updated_on', $fields)) {
 			$fields[] = 'updated_on';
-			$values[] = time();
+			$time = time();
+			$values[] = $time;
+			$this->set('updated_on', $time);
 		}
 
 		return "INSERT INTO ".$this->getTable()." \n".
@@ -535,14 +540,21 @@ class Metrodb_Dataitem {
 	 * will be considered unique.
 	 */
 	public function buildUpdate() {
-		$db     = Metrodb_Connector::getHandle(NULL, $this->_table);
-		$qc     = $db->qc;
-		$sql    = "UPDATE ".$this->getTable()." SET \n";
-		$vars   = get_object_vars($this);
-		$keys   = array_keys($vars);
-		$fields = array();
-		$values = array();
-		$set    = '';
+		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$qc   = $db->qc;
+		$sql = "UPDATE ".$this->getTable()." SET \n";
+		$vars = get_object_vars($this);
+		$keys = array_keys($vars);
+
+		$set = '';
+
+		// auto update updated_on with current timestamp
+		//#metadata
+		if (in_array('updated_on', $keys)) {
+			$keys[]             = 'updated_on';
+			$vars['updated_on'] = time();
+		}
+
 		foreach ($keys as $k) {
 			if (substr($k,0,1) == '_') { continue; }
 			if (strlen($set) ) { $set .= ', ';}
@@ -569,6 +581,7 @@ class Metrodb_Dataitem {
 		} else {
 			$sql .= ' WHERE '.$this->_pkey .' = \''.$this->{$this->_pkey}.'\'';//.' LIMIT 1';
 		}
+
 		return $sql;
 	}
 
@@ -843,5 +856,4 @@ class Metrodb_Dataitem {
 		}
 		return $db->query($this->buildInsert());
 	}
-
 }
