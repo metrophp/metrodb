@@ -550,7 +550,7 @@ class Metrodb_Dataitem {
 
 		// auto update updated_on with current timestamp
 		//#metadata
-		if (in_array('updated_on', $keys)) {
+		if (!in_array('updated_on', $keys)) {
 			$keys[]             = 'updated_on';
 			$vars['updated_on'] = time();
 		}

@@ -62,4 +62,11 @@ class Metrodb_Tests_Dataitem extends PHPUnit_Framework_TestCase {
 		$clause = $di->buildSort();
 		$this->assertEquals('ORDER BY colA DESC, colB ASC', $clause);
 	}
+
+	public function test_update_sql_should_have_updated_on() {
+		$di = new Metrodb_Dataitem('foo');
+		$di->_isNew = FALSE;
+		$update = $di->buildUpdate();
+		$this->assertFalse( strpos($update, 'updated_on') === FALSE);
+	}
 }
