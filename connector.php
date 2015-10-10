@@ -583,7 +583,7 @@ class Metrodb_Connector {
 	public function dynamicCreateSql($dataitem) {
 		$sql = "";
 		//$props = $dataitem->__get_props();
-		$finalTypes = array();
+		$finalTypes = array('created_on'=>'ts', 'updated_on'=>'ts');
 
 		$vars = get_object_vars($dataitem);
 		$keys = array_keys($vars);
@@ -593,10 +593,14 @@ class Metrodb_Connector {
 			if (substr($k,0,1) == '_') { continue; }
 			//fix for SQLITE
 			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
+
 			if (array_key_exists($k, $dataitem->_typeMap)) {
 				$finalTypes[$k] = $dataitem->_typeMap[$k];
 			} else {
-				$finalTypes[$k] = "string";
+				//only override created_on and update_on explicitly
+				if (!isset($finalTypes[$k])) {
+					$finalTypes[$k] = "string";
+				}
 			}
 		}
 
@@ -607,47 +611,36 @@ class Metrodb_Connector {
 		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
 
 		if (! array_key_exists($dataitem->_pkey, $finalTypes)) {
-			$sqlDefs[] = $dataitem->_pkey." int(11) unsigned auto_increment primary key";
+			$sqlDefs[$dataitem->_pkey] = $this->qc.$dataitem->_pkey.$this->qc." int(11) unsigned auto_increment primary key";
 		}
 
 		foreach($finalTypes as $propName=>$type) {
-			$propName = $this->qc.$propName.$this->qc;
+			$colName = $this->qc.$propName.$this->qc;
 			switch($type) {
 			case "email":
-				$sqlDefs[$propName] = "$propName varchar(255)";
+				$sqlDefs[$propName] = "$colName varchar(255)";
 				break;
 			case "ts":
-				$sqlDefs[$propName] = "$propName int(11) unsigned NULL DEFAULT NULL";
+				$sqlDefs[$propName] = "$colName int(11) unsigned NULL DEFAULT NULL";
 				break;
 			case "int":
-				$sqlDefs[$propName] = "$propName int(11) NULL";
+				$sqlDefs[$propName] = "$colName int(11) NULL";
 				break;
 			case "text":
-				$sqlDefs[$propName] = "$propName longtext NULL";
+				$sqlDefs[$propName] = "$colName longtext NULL";
 				break;
 			case "lob":
-				$sqlDefs[$propName] = "$propName longblob NULL";
+				$sqlDefs[$propName] = "$colName longblob NULL";
 				break;
 			case "date":
-				$sqlDefs[$propName] = "$propName datetime NULL";
+				$sqlDefs[$propName] = "$colName datetime NULL";
 				break;
 			default:
-				$sqlDefs[$propName] = "$propName varchar(255)";
+				$sqlDefs[$propName] = "$colName varchar(255)";
 				break;
 
 			}
 		}
-
-		if (! isset($sqlDefs['created_on'])) {
-			$sqlDefs[] = "created_on int unsigned NULL";
-		}
-		if (! isset($sqlDefs['updated_on'])) {
-			$sqlDefs[] = "updated_on int unsigned NULL";
-		}
-
-//    	$sqlDefs[] = 'PRIMARY KEY('.$dataitem->_pkey.')';
-//		$sqlDefs[] = "created_on datetime NULL";
-//		$sqlDefs[] = "updated_on datetime NULL";
 
 		$sql .= implode(",\n",$sqlDefs);
 		$sql .= "\n) ". $this->tableOpts.";";
