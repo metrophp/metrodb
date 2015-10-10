@@ -552,8 +552,8 @@ class Metrodb_Dataitem {
 		//#metadata
 		if (!in_array('updated_on', $keys)) {
 			$keys[]             = 'updated_on';
-			$vars['updated_on'] = time();
 		}
+		$vars['updated_on'] = time();
 
 		foreach ($keys as $k) {
 			if (substr($k,0,1) == '_') { continue; }
