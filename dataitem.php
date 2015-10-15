@@ -542,7 +542,7 @@ class Metrodb_Dataitem {
 	public function buildUpdate() {
 		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 		$qc   = $db->qc;
-		$sql = "UPDATE ".$this->getTable()." SET \n";
+		$sql = "UPDATE ".$qc.$this->getTable().$qc." SET \n";
 		$vars = get_object_vars($this);
 		$keys = array_keys($vars);
 
@@ -851,6 +851,7 @@ class Metrodb_Dataitem {
 		foreach ($sqlDefs as $sql) {
 			$db->query($sql);
 		}
+
 		if ($doUpdate) {
 			return $db->query($this->buildUpdate());
 		}
