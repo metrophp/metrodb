@@ -489,10 +489,11 @@ class Metrodb_Dataitem {
 	}
 
 	public function buildInsert() {
-		$db   = Metrodb_Connector::getHandle(NULL, $this->_table);
-		$qc   = $db->qc;
-		$vars = get_object_vars($this);
-		$keys = array_keys($vars);
+		$db     = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$qc     = $db->qc;
+		$vars   = get_object_vars($this);
+		$keys   = array_keys($vars);
+		$fields = array();
 
 		foreach ($keys as $k) {
 			if (substr($k,0,1) == '_') { continue; }
