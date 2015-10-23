@@ -761,13 +761,30 @@ class Metrodb_Dataitem {
 		}
 	}
 
-	public function hasMany($table, $tableJ, $alias='') {
+	public function hasMany($table, $tableJ, $alias='',  $tableJLk='', $tableJFk='', $tableFk='') {
+		if ($tableJLk == '') { $tableJLk = $this->_pkey;}
+		if ($tableJFk == '') { $tableJFk = $table.'_id';}
+		if ($tableFk == '')  { $tableFk  = $table.'_id';}
 
 		$aliasJ = 'T'.count($this->_relatedSingle);
-		$this->_relatedSingle[] = array('fk'=>$this->_pkey, 'ftable'=>$tableJ, 'falias'=>$aliasJ, 'lk'=>$this->_pkey, 'ltable'=>$this->_table);
+		$this->_relatedSingle[] = array(
+			'ftable'=>$tableJ,
+			'ltable'=>$this->_table,
+			'lk'=>$this->_pkey,
+			'falias'=>$aliasJ,
+			'fk'=>$tableJLk
+		);
 
 		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
-		$this->_relatedSingle[] = array('fk'=>$table.'_id', 'ftable'=>$table, 'falias'=>$alias, 'lk'=>$table.'_id', 'ltable'=>$aliasJ);
+		//left join  ftable
+		// on  ltable.lk = falias.fk
+		$this->_relatedSingle[] = array(
+			'ftable'=>$table,
+			'ltable'=>$aliasJ,
+			'lk'=>$tableJFk,
+			'falias'=>$alias,
+			'fk'=>$tableFk
+		);
 	}
 
 	public function hasOne($table, $fk = '', $lk = '', $alias='') {
