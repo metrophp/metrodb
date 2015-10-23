@@ -64,8 +64,8 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 		/////////////////////
 
 		$finder = new Metrodb_Dataitem('parent');
-		$finder->_cols[] = 'parent.*, T0.child_id';
-		$finder->hasOne('child', 'parent_id', 'parent_id') ;
+		$finder->_cols[] = 'parent.*, TC.child_id';
+		$finder->hasOne('child', 'TC', 'parent_id', 'parent_id') ;
 		$finder->andWhere('parent.parent_id', 2);
 		//echo $finder->echoSelect();
 		$result = $finder->findAsArray();
