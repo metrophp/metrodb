@@ -21,7 +21,7 @@ Then add the dependency as you normally would.
 ```
     "require": {
         "php": ">= 5.3.7",
-        "metro/metrodb": ">=1.3.6"
+        "metrodb": ">=1.4.0"
     },
 ```
 
