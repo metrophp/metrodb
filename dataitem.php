@@ -787,11 +787,20 @@ class Metrodb_Dataitem {
 		);
 	}
 
-	public function hasOne($table, $fk = '', $lk = '', $alias='') {
+
+	public function hasOne($table, $alias='', $fk = '', $lk = '') {
 		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
 		if ($fk == '') { $fk = $table.'_id';}
-		if ($lk == '') { $lk = $table.'_id'; }
-		$this->_relatedSingle[] = array('fk'=>$fk, 'ftable'=>$table, 'falias'=>$alias, 'lk'=>$lk, 'ltable'=>$this->_table);
+		if ($lk == '') { $lk = $this->_pkey; }
+		//left join  ftable
+		// on  ltable.lk = falias.fk
+		$this->_relatedSingle[] = array(
+			'ftable'=>$table,
+			'ltable'=>$this->_table,
+			'lk'=>$lk,
+			'falias'=>$alias,
+			'fk'=>$fk
+		);
 	}
 
 	public function __toString() {
