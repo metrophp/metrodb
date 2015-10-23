@@ -594,8 +594,8 @@ class Metrodb_Dataitem {
 			$fk  = $rel['fk'];
 			$lk  = $rel['lk'];
 			$ltable  = $rel['ltable'];
-			$sql .= 'LEFT JOIN `'.$tbl.'` AS '.$als.' 
-				ON '.$ltable.'.'.$lk.' = '.$als.'.`'.$fk.'` ';
+			$sql .= PHP_EOL.'  LEFT JOIN "'.$tbl.'" AS '.$als.
+                    PHP_EOL.'    ON "'.$ltable.'"."'.$lk.'" = "'.$als.'"."'.$fk.'" ';
 		}
 		return $sql;
 	}
@@ -761,16 +761,46 @@ class Metrodb_Dataitem {
 		}
 	}
 
-	public function hasMany($table, $alias='') {
-		if ($alias == '') { $alias = 'T'.count($this->_relatedMany);}
-		$this->_relatedMany[] = array('table'=>$table, 'alias'=>$alias);
+	public function hasMany($table, $tableJ, $alias='',  $tableJLk='', $tableJFk='', $tableFk='') {
+		if ($tableJLk == '') { $tableJLk = $this->_pkey;}
+		if ($tableJFk == '') { $tableJFk = $table.'_id';}
+		if ($tableFk == '')  { $tableFk  = $table.'_id';}
+
+		$aliasJ = 'T'.count($this->_relatedSingle);
+		$this->_relatedSingle[] = array(
+			'ftable'=>$tableJ,
+			'ltable'=>$this->_table,
+			'lk'=>$this->_pkey,
+			'falias'=>$aliasJ,
+			'fk'=>$tableJLk
+		);
+
+		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
+		//left join  ftable
+		// on  ltable.lk = falias.fk
+		$this->_relatedSingle[] = array(
+			'ftable'=>$table,
+			'ltable'=>$aliasJ,
+			'lk'=>$tableJFk,
+			'falias'=>$alias,
+			'fk'=>$tableFk
+		);
 	}
 
-	public function hasOne($table, $fk = '', $lk = '', $alias='') {
+
+	public function hasOne($table, $alias='', $fk = '', $lk = '') {
 		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
 		if ($fk == '') { $fk = $table.'_id';}
-		if ($lk == '') { $lk = $table.'_id'; }
-		$this->_relatedSingle[] = array('fk'=>$fk, 'ftable'=>$table, 'falias'=>$alias, 'lk'=>$lk, 'ltable'=>$this->_table);
+		if ($lk == '') { $lk = $this->_pkey; }
+		//left join  ftable
+		// on  ltable.lk = falias.fk
+		$this->_relatedSingle[] = array(
+			'ftable'=>$table,
+			'ltable'=>$this->_table,
+			'lk'=>$lk,
+			'falias'=>$alias,
+			'fk'=>$fk
+		);
 	}
 
 	public function __toString() {
