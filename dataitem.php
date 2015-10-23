@@ -594,8 +594,8 @@ class Metrodb_Dataitem {
 			$fk  = $rel['fk'];
 			$lk  = $rel['lk'];
 			$ltable  = $rel['ltable'];
-			$sql .= 'LEFT JOIN `'.$tbl.'` AS '.$als.' 
-				ON '.$ltable.'.'.$lk.' = '.$als.'.`'.$fk.'` ';
+			$sql .= PHP_EOL.'  LEFT JOIN "'.$tbl.'" AS '.$als.
+                    PHP_EOL.'    ON "'.$ltable.'"."'.$lk.'" = "'.$als.'"."'.$fk.'" ';
 		}
 		return $sql;
 	}
