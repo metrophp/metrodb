@@ -761,9 +761,13 @@ class Metrodb_Dataitem {
 		}
 	}
 
-	public function hasMany($table, $alias='') {
-		if ($alias == '') { $alias = 'T'.count($this->_relatedMany);}
-		$this->_relatedMany[] = array('table'=>$table, 'alias'=>$alias);
+	public function hasMany($table, $tableJ, $alias='') {
+
+		$aliasJ = 'T'.count($this->_relatedSingle);
+		$this->_relatedSingle[] = array('fk'=>$this->_pkey, 'ftable'=>$tableJ, 'falias'=>$aliasJ, 'lk'=>$this->_pkey, 'ltable'=>$this->_table);
+
+		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
+		$this->_relatedSingle[] = array('fk'=>$table.'_id', 'ftable'=>$table, 'falias'=>$alias, 'lk'=>$table.'_id', 'ltable'=>$aliasJ);
 	}
 
 	public function hasOne($table, $fk = '', $lk = '', $alias='') {
