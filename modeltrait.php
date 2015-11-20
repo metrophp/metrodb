@@ -54,4 +54,8 @@ trait Metrodb_Modeltrait {
 	public function __call($func, $args) {
 		return call_user_func_array(array($this->dataitem, $func), $args);
 	}
+
+	public function __toString() {
+		return $this->dataitem->__toString();
+	}
 }
