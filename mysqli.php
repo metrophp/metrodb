@@ -231,8 +231,11 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	 * Moves resultSet cursor to beginning
 	 * @return void
 	 */
-	function reset() {
-		mysqli_data_seek($this->Query_ID, 0);
+	function reset($resId='') {
+		if (! $resId ) {
+			$resId = count($this->resultSet) -1;
+		}
+		mysqli_data_seek($this->resultSet[$resId], 0);
 	}
 
 
@@ -242,8 +245,12 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	 * @param int $row Desired index offset
 	 * @return void
 	 */
-	function seek($row) {
-		mysqli_data_seek($this->resultSet, $row);
+	function seek($row, $resId='') {
+		if (! $resId ) {
+			$resId = count($this->resultSet) -1;
+		}
+
+		mysqli_data_seek($this->resultSet[$resId], $row);
 		$this->row = $row;
 	}
 
