@@ -23,7 +23,26 @@ trait Metrodb_Modeltrait {
 	 *
 	 */
 	public function load($id) {
-		return $this->dataitem->load($id);
+		$x = $this->dataitem->load($id);
+		if ($x) {
+			$this->hydrate();
+		}
+		return $x;
+	}
+
+	/**
+	 *
+	 */
+	public function loadExisting() {
+		$x = $this->dataitem->loadExisting();
+		if ($x) {
+			$this->hydrate();
+		}
+		return $x;
+	}
+
+
+	public function hydrate() {
 	}
 
 	/**
