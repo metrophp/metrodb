@@ -94,21 +94,40 @@ class Metrodb_Mysql extends Metrodb_Connector {
 		 */
 	}
 
+	function _prepareStatement($statementString, $bind=array()) {
+		$last = 0;
+		$last = strrpos($statementString, '?', $last);
+		while ($last !== FALSE) {
 
-	function exec($statementString) {
+			$val = array_pop($bind);
+			if (is_double($val)) {
+				$repl = $val;
+			} else if( is_int($val) ) {
+				$repl = $val;
+			} else {
+				$repl = $this->escapeCharValue( $val );
+			}
+			$statementString = substr_replace(
+							   $statementString,
+							   $repl,
+							   $last,
+							   1
+			);
+
+			$len = strlen($statementString);
+			$last = strrpos($statementString, '?', -($len-$last));
+		}
+		return $statementString;
+	}
+
+	function exec($statementString, $bind=NULL) {
 		if ($this->driverId == 0 ) {
 			$this->connect();
 		}
-		//sometimes we need to create a new DB (schema)
-		// !$this->isSelected is not always an error condition
-
-		//don't try to do queries if there's no DB
-		/*
-		if (! $this->isSelected ) {
-			$this->errorMessage = 'no schema selected.';
-			return false;
+		//mysql API has no prepared statements.
+		if (is_array($bind)) {
+			$statementString = $this->_simulatePrepare($statementString, $bind);
 		}
-		 */
 		return mysql_query($statementString, $this->driverId);
 	}
 

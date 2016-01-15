@@ -96,11 +96,31 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	}
 
 
-	function exec($statementString) {
+	function exec($statementString, $bind=NULL) {
 		if (is_resource($this->driverId)) {
 			$this->connect();
 		}
-		return mysqli_query($this->driverId, $statementString);
+
+		$stmt = mysqli_prepare($this->driverId, $statementString);
+		if (!$stmt) {
+			return FALSE;
+		}
+		if (is_array($bind)) {
+			$args = array('');
+			foreach ($bind as $idx=>$_b) {
+				if (is_double($_b)) {
+					$args[0] .= 'd';
+				} else if (is_int($_b)) {
+					$args[0] .= 'i';
+				} else {
+					$args[0] .= 's';
+				}
+				$args[] = &$bind[$idx];
+			}
+			call_user_func_array(array($stmt, 'bind_param'), $args);
+		}
+		return mysqli_stmt_execute($stmt);
+//		return mysqli_query($this->driverId, $statementString);
 	}
 
 

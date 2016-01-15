@@ -238,7 +238,7 @@ class Metrodb_Connector {
 	 * @return  void
 	 * @param  string $statementString  SQL command to send
 	 */
-	public function exec($statementString) {}
+	public function exec($statementString, $bind=NULL) {}
 
 	/**
 	 * Close connection
@@ -395,19 +395,19 @@ class Metrodb_Connector {
 	 * for commands like "set FLAG=1" or "BEGIN TRANSACTION"
 	 * @see executeStatement($stmt)
 	 */
-	public function execute($stmt) {
-		return $this->executeStatement($stmt);
+	public function execute($stmt, $bind=NULL) {
+		return $this->executeStatement($stmt, $bind);
 	}
 
 	/**
 	 * for commands like "set FLAG=1" or "BEGIN TRANSACTION"
 	 * @param $stmt mixed either String or Object with toString()
 	 */
-	public function executeStatement($stmt) {
+	public function executeStatement($stmt, $bind=NULL) {
 		if (is_object($stmt)) {
-			return $this->exec($stmt->toString());
+			return $this->exec($stmt->toString(), $bind);
 		} else {
-			return $this->exec($stmt);
+			return $this->exec($stmt, $bind);
 		}
 	}
 
