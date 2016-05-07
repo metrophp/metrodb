@@ -67,6 +67,12 @@ class Metrodb_Tests_Dataitem extends PHPUnit_Framework_TestCase {
 		$di = new Metrodb_Dataitem('foo');
 		$di->_isNew = FALSE;
 		$update = $di->buildUpdate();
-		$this->assertFalse( strpos($update, 'updated_on') === FALSE);
+		$this->assertFalse( strpos($update, 'updated_on') === FALSE );
+	}
+
+	public function test_delete_without_conditions_fails() {
+		$di = new Metrodb_Dataitem('foo');
+		$update = $di->delete();
+		$this->assertFalse( $update );
 	}
 }
