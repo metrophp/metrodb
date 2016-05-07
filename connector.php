@@ -610,7 +610,7 @@ class Metrodb_Connector {
 		 */
 		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
 
-		if (! array_key_exists($dataitem->_pkey, $finalTypes)) {
+		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $finalTypes)) {
 			$sqlDefs[$dataitem->_pkey] = $this->qc.$dataitem->_pkey.$this->qc." int(11) unsigned auto_increment primary key";
 		}
 
@@ -650,6 +650,12 @@ class Metrodb_Connector {
 		} else {
 			$sqlStmt = array($sql);
 		}
+
+		//create unique key on multiple columns
+		if ( count($dataitem->_uniqs ) ) {
+			$sqlStmt[] = "ALTER TABLE ".$tableName." ADD UNIQUE INDEX ".$this->qc."unique_idx".$this->qc." (".implode(',', $dataitem->_uniqs).") ";
+		}
+
 		return $sqlStmt;
 	}
 }

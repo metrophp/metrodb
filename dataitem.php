@@ -403,24 +403,19 @@ class Metrodb_Dataitem {
 	}
 
 
-	public function delete($where='') {
+	/**
+	 * If this object was loaded (_isNew == false) {
+	 * then delete using this object's pkey
+	 * else delete with the current whereAtoms
+	 */
+	public function delete($whereQ='') {
 		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
-		$whereQ = '';
-		//maybe the where should be an array of IDs,
-		// not an array of "x=y" ?
-		/*
-		if (is_array($where) ) {
-			$whereQ = implode(' and ',$where);
-		} else if (strlen($where) ) {
-			$whereQ = $this->_pkey .' = '.$where;
+
+		//refuse to delete entire table
+		if ( $this->_isNew && $whereQ == '' && count($this->_where) == 0) {
+			return FALSE;
 		}
-		 */
-		if (! isset($this->{$this->_pkey}) && $where != '') {
-			$this->{$this->_pkey} = $where;
-		}
-		if ( isset($this->{$this->_pkey}) ) {
-			$whereQ = $this->_pkey .' = \''.$this->{$this->_pkey}.'\'';
-		}
+
 		return $db->query( $this->buildDelete($whereQ) );
 	}
 
@@ -484,7 +479,30 @@ class Metrodb_Dataitem {
 	}
 
 
+	/**
+	 * If the dataitem has been loaded, only delete where it's pkey
+	 * or combination of uniqs match.
+	 * If the dataitem is new, then use the _where settings with optional
+	 * where clause tacked on.
+	 */
 	public function buildDelete($whereQ='') {
+		//refuse to delete entire table
+		if ( $this->_isNew && $whereQ == '' && count($this->_where) == 0) {
+			throw new Exception('Incompatible where clause for delete');
+		}
+
+		if ( ! $this->_isNew ) {
+			$whereQ = $this->_pkey .' = \''.$this->{$this->_pkey}.'\'';
+			if (!isset($this->_pkey) || $this->_pkey === NULL) {
+				$whereQ = '';
+				$atom = '';
+				foreach ($this->_uniqs as $uni) {
+					$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
+					$atom = $this->_whereAtomToString($struct, $atom)."\n";
+				}
+				$whereQ .= $atom;
+			}
+		}
 		return "DELETE FROM ".$this->getTable()." ".$this->buildWhere($whereQ). " " . $this->buildLimit();
 	}
 
@@ -570,7 +588,6 @@ class Metrodb_Dataitem {
 		$sql .= $set;
 		if (!isset($this->_pkey) || $this->_pkey === NULL) {
 			$sql .= ' WHERE ';
-			$uniqs = array();
 			$atom = '';
 			foreach ($this->_uniqs as $uni) {
 				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
@@ -628,7 +645,7 @@ class Metrodb_Dataitem {
 			}
 
 		}
-		if (strlen($whereQ) ) {$whereQ = ' where '.$whereQ;}
+		if (strlen($whereQ) ) {$whereQ = ' WHERE '.$whereQ;}
 		return $whereQ;
 	}
 
@@ -823,13 +840,9 @@ class Metrodb_Dataitem {
 	}
 
 	public function echoDelete($whereQ='') {
-		if (! isset($this->{$this->_pkey}) && $whereQ != '') {
-			$this->{$this->_pkey} = $whereQ;
-		}
-		if ( isset($this->{$this->_pkey}) ) {
-			$whereQ = $this->_pkey .' = "'.$this->{$this->_pkey}.'"';
-		}
+		echo "<pre>\n";
 		echo $this->buildDelete($whereQ);
+		echo "</pre>\n";
 	}
 
 	public function echoInsert($whereQ = '') {
