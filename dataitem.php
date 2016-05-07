@@ -588,7 +588,6 @@ class Metrodb_Dataitem {
 		$sql .= $set;
 		if (!isset($this->_pkey) || $this->_pkey === NULL) {
 			$sql .= ' WHERE ';
-			$uniqs = array();
 			$atom = '';
 			foreach ($this->_uniqs as $uni) {
 				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
@@ -646,7 +645,7 @@ class Metrodb_Dataitem {
 			}
 
 		}
-		if (strlen($whereQ) ) {$whereQ = ' where '.$whereQ;}
+		if (strlen($whereQ) ) {$whereQ = ' WHERE '.$whereQ;}
 		return $whereQ;
 	}
 
@@ -841,13 +840,9 @@ class Metrodb_Dataitem {
 	}
 
 	public function echoDelete($whereQ='') {
-		if (! isset($this->{$this->_pkey}) && $whereQ != '') {
-			$this->{$this->_pkey} = $whereQ;
-		}
-		if ( isset($this->{$this->_pkey}) ) {
-			$whereQ = $this->_pkey .' = "'.$this->{$this->_pkey}.'"';
-		}
+		echo "<pre>\n";
 		echo $this->buildDelete($whereQ);
+		echo "</pre>\n";
 	}
 
 	public function echoInsert($whereQ = '') {
