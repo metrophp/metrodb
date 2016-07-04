@@ -2,7 +2,7 @@
 
 class Metrodb_Mysqli extends Metrodb_Connector {
 
-	public $RESULT_TYPE = MYSQL_ASSOC;
+	public $RESULT_TYPE = MYSQLI_ASSOC;
 	public $persistent  = 'n';
 	public $isSelected  = false;
 	public $port        = 3306;
@@ -325,7 +325,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	function getTables() {
 		$this->query("show tables");
 		$j = $this->RESULT_TYPE;
-		$this->RESULT_TYPE = MYSQL_BOTH;
+		$this->RESULT_TYPE = MYSQLI_BOTH;
 		while ($this->nextRecord()) {
 			$x[] = $this->record[0];
 		}
@@ -408,13 +408,13 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	function setType($type='ASSOC') {
 		$this->prevType = $this->RESULT_TYPE;
 		if ($type=='ASSOC') {
-			$this->RESULT_TYPE = MYSQL_ASSOC;
+			$this->RESULT_TYPE = MYSQLI_ASSOC;
 		}
 		if ($type=='NUM') {
-			$this->RESULT_TYPE = MYSQL_NUM;
+			$this->RESULT_TYPE = MYSQLI_NUM;
 		}
 		if ($type=='BOTH') {
-			$this->RESULT_TYPE = MYSQL_BOTH;
+			$this->RESULT_TYPE = MYSQLI_BOTH;
 		}
 	}
 
