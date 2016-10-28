@@ -330,6 +330,7 @@ class Metrodb_Dataitem {
 		do {
 			$x = new Metrodb_Dataitem($this->_table,$this->_pkey);
 			$x->_excludes = $this->_excludes;
+			$x->_nuls     = $this->_nuls;
 			$x->row2Obj($db->record);
 			$x->_isNew = false;
 			if ( $this->_rsltByPkey == TRUE) {
