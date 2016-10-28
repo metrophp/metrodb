@@ -23,7 +23,7 @@ class Metrodb_Tests_Dataitem extends PHPUnit_Framework_TestCase {
 	}
 
 	public function test_echo_select() {
-		$expectedString = "<pre>\nSELECT * FROM foo   where colA != 'bar'     LIMIT 125, 25 </pre>\n";
+		$expectedString = "<pre>\nSELECT * FROM foo   WHERE colA != 'bar'     LIMIT 125, 25 </pre>\n";
 		$di = new Metrodb_Dataitem('foo', 'foo_bar');
 
 		$di->andWhere('colA', 'bar', '!=');
