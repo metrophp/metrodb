@@ -124,9 +124,10 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 	}
 
 	public function tearDown() {
-		$db = Metrodb_Connector::getHandle('default');
-		$db->exec('TRUNCATE parent');
-		$db->exec('TRUNCATE child');
-		$db->exec('TRUNCATE parent_child_rel');
+		$db = Metrodb_Connector::getHandleRef('default');
+
+		$db->truncate('parent');
+		$db->truncate('child');
+		$db->truncate('parent_child_rel');
 	}
 }

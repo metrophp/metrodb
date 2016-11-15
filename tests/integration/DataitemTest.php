@@ -78,7 +78,7 @@ class Metrodb_Tests_Integration_Dataitem extends PHPUnit_Framework_TestCase {
 
 	public function tearDown() {
 		$db = Metrodb_Connector::getHandle('default');
-		$db->exec('TRUNCATE foo');
-		$db->exec('TRUNCATE pictures');
+		$db->truncate('foo');
+		$db->truncate('pictures');
 	}
 }

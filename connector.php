@@ -440,6 +440,11 @@ class Metrodb_Connector {
 		$this->exec("COMMIT TRANSACTION");
 	}
 
+	public function truncate($tbl) {
+		$qc = $this->qc;
+		return $this->exec("TRUNCATE ".$qc.$tbl.$qc);
+	}
+
 	/**
 	 * Prepare to stream a blob record
 	 *
