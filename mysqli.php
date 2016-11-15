@@ -8,7 +8,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	public $port        = 3306;
 	public $qc          = '`';
 	public $collation   = 'COLLATE utf8_general_ci';
-	public $tableOtps   = 'ENGINE=INNODB';
+	public $tableOpts   = 'ENGINE=INNODB';
 
 	/**
 	 * Connect to the DB server
