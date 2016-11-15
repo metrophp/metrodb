@@ -19,7 +19,7 @@ class Metrodb_Tests_Connector extends PHPUnit_Framework_TestCase {
 	}
 
 	public function test_get_driver() {
-		$url = 'mysql://foo@bar/dbname';
+		$url = 'mysqli://foo@bar/dbname';
 		Metrodb_Connector::setDsn('dummy2', $url);
 		try {
 			$db = Metrodb_Connector::getHandle('dummy2');
@@ -28,6 +28,6 @@ class Metrodb_Tests_Connector extends PHPUnit_Framework_TestCase {
 			$db = NULL;
 		}
 		$this->assertTrue(is_object($db));
-		$this->assertEquals('metrodb_mysql', strtolower(get_class($db)));
+		$this->assertEquals('metrodb_mysqli', strtolower(get_class($db)));
 	}
 }
