@@ -20,7 +20,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 		if (! function_exists('mysqli_connect')) {
 			return false;
 		}
-		if ($this->driverId == 0 ) {
+		if (!is_resource($this->driverId)) {
 			if ($this->persistent == 'y') {
 				$this->driverId = mysqli_connect('p:'.$this->host, $this->user, $this->password, '', $this->port);
 			} else {
@@ -97,7 +97,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 
 
 	function exec($statementString, $bind=NULL) {
-		if (is_resource($this->driverId)) {
+		if (!is_resource($this->driverId)) {
 			$this->connect();
 		}
 
@@ -133,6 +133,8 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 		if ( is_resource($this->driverId) ) {
 			mysqli_close($this->driverId);
 		}
+		$this->isSelected = false;
+		$this->resultSet  = array();
 		$this->driverId = 0;
 	}
 
