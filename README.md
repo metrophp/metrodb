@@ -20,8 +20,8 @@ Then add the dependency as you normally would.
 
 ```
     "require": {
-        "php": ">= 5.3.7",
-        "metrodb": ">=1.4.0"
+        "php": ">= 5.6.0",
+        "metrodb": ">=3.0.0"
     },
 ```
 
