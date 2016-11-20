@@ -279,10 +279,6 @@ class Metrodb_Connector {
 	public function freeResult() {}
 
 
-	public function getAll($query) {
-		return $this->queryGetAll($query);
-	}
-
 	public function queryGetAll($query, $report=TRUE) {
 		$this->query($query, $report);
 		$rows = array();
