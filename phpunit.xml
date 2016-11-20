@@ -21,6 +21,7 @@
 			<file>./modeltrait.php</file>
 			<file>./mysqli.php</file>
 			<file>./sqlite3.php</file>
+			<file>./blobstream.php</file>
         </whitelist>
         <blacklist>
             <directory >./vendor/</directory>
