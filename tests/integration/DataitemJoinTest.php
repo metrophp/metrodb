@@ -65,7 +65,7 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 
 		$finder = new Metrodb_Dataitem('parent');
 		$finder->_cols[] = 'parent.*, TC.child_id';
-		$finder->hasOne('child', 'TC', 'parent_id', 'parent_id') ;
+		$finder->hasOne('child', 'parent_id', 'parent_id', 'TC');
 		$finder->andWhere('parent.parent_id', 2);
 		//echo $finder->echoSelect();
 		$result = $finder->findAsArray();
@@ -95,27 +95,28 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 		$parent->save();
 
 
-		$rel    = new Metrodb_Dataitem('parent_child_rel');
+		$rel    = new Metrodb_Dataitem('parent_child_link');
 		$rel->set('child_id', 1);
 		$rel->set('parent_id', 1);
 		$rel->save();
 
-		$rel    = new Metrodb_Dataitem('parent_child_rel');
+		$rel    = new Metrodb_Dataitem('parent_child_link');
 		$rel->set('child_id', 2);
 		$rel->set('parent_id', 1);
 		$rel->save();
 
-		$rel    = new Metrodb_Dataitem('parent_child_rel');
+		$rel    = new Metrodb_Dataitem('parent_child_link');
 		$rel->set('child_id', 2);
 		$rel->set('parent_id', 2);
 		$rel->save();
 		/////////////////////
 
 		$finder = new Metrodb_Dataitem('parent');
-		$finder->_cols[] = 'x1.title';
+		$finder->_cols[] = 'T1.title';
 		$finder->_cols[] = 'T0.child_id';
-		$finder->hasMany('child', 'parent_child_rel', 'x1');
+		$finder->hasManyToMany('child');
 		$finder->andWhere('parent.parent_id', 1);
+		//$finder->echoSelect();
 		$result = $finder->findAsArray();
 
 		$this->assertEquals(2, count($result));
@@ -128,6 +129,6 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 
 		$db->truncate('parent');
 		$db->truncate('child');
-		$db->truncate('parent_child_rel');
+		$db->truncate('parent_child_link');
 	}
 }

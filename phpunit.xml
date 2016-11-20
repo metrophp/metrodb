@@ -3,7 +3,9 @@
 	xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/4.4/phpunit.xsd"
 	backupGlobals="true"
 	backupStaticAttributes="false"
-	bootstrap="tests/bootstrap.php">
+	bootstrap="tests/bootstrap.php"
+	colors="true"
+	strict="true">
 	<testsuites>
 		<testsuite name="Metrodb Unit Tests">
 			<directory>tests/unit/</directory>
@@ -12,4 +14,19 @@
 			<directory>tests/integration/</directory>
 		</testsuite>
 	</testsuites>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+			<file>./connector.php</file>
+			<file>./dataitem.php</file>
+			<file>./modeltrait.php</file>
+			<file>./mysqli.php</file>
+			<file>./sqlite3.php</file>
+        </whitelist>
+        <blacklist>
+            <directory >./vendor/</directory>
+            <directory >./tests/</directory>
+            <directory >./nosql/</directory>
+            <directory suffix=".html.php">./src/</directory>
+        </blacklist>
+    </filter>
 </phpunit>
