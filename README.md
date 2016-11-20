@@ -9,11 +9,11 @@ Installation with composer
 This project is not on packagist, so you have to add a repository (because composer can't guess it correctly?)
 
 ```
-    "repositories": [ 
-        { 
+    "repositories": [
+        {
             "type": "vcs",
             "url": "https://github.com/metrophp/metrodb.git"
-        } 
+        }
     ],
 ```
 Then add the dependency as you normally would.
@@ -76,4 +76,58 @@ $obj->save();
 $obj->column2 = 'value_c';
 $x = $obj->save();
 //x is still the pkey
+```
+
+Relations
+----
+3 relations are supported:
+
+  * Single Relation
+  * Many Relation
+  * Many to Many Relation
+
+Use ```$obj->hasOne('address')``` when your table has one column that matches one ID to another table.
+
+```
+| obj_id | name | address_id |
+| 1      | x    | 1          |
+| 3      | x    | 99         |
+
+| address_id | street | zip  |
+| 1          | elm    | 1234 |
+| 99         | oak    | 4321 |
+```
+
+
+Use ```$obj->hasMany('address')``` when the __related table__ has one column that matches the ID in your obj table.
+
+```
+| obj_id | name |
+| 1      | x    |
+| 3      | x    |
+
+| address_id | street | zip  | obj_id |
+| 1          | elm    | 1234 | 1      |
+| 99         | oak    | 4321 | 1      |
+```
+
+
+
+
+Use ```$obj->hasManyToMany('address')``` when there exists a __join table__ which has columns for both tables' ID
+le.
+
+```
+| obj_id | name |
+| 1      | x    |
+| 3      | x    |
+
+| obj_address_link_id | address_id | obj_id | rank |
+| 1                   | 1          | 1      | 1    |
+| 2                   | 99         | 1      | 2    |
+| 3                   | 1          | 3      | 1    |
+
+| address_id | street | zip  |
+| 1          | elm    | 1234 |
+| 99         | oak    | 4321 |
 ```

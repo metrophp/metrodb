@@ -779,10 +779,11 @@ class Metrodb_Dataitem {
 		}
 	}
 
-	public function hasMany($table, $tableJ, $alias='',  $tableJLk='', $tableJFk='', $tableFk='') {
+	public function hasManyToMany($table, $tableJ='', $tableJLk='', $tableJFk='', $tableFk='', $alias='') {
 		if ($tableJLk == '') { $tableJLk = $this->_pkey;}
 		if ($tableJFk == '') { $tableJFk = $table.'_id';}
-		if ($tableFk == '')  { $tableFk  = $table.'_id';}
+		if ($tableFk  == '') { $tableFk  = $table.'_id';}
+		if ($tableJ   == '') { $tableJ   = $this->_table. '_'.$table.'_link';}
 
 		$aliasJ = 'T'.count($this->_relatedSingle);
 		$this->_relatedSingle[] = array(
@@ -805,10 +806,27 @@ class Metrodb_Dataitem {
 		);
 	}
 
-
-	public function hasOne($table, $alias='', $fk = '', $lk = '') {
+	/**
+	 * Use when the foreign table has its primary key in this object's table.
+	 */
+	public function hasOne($table, $fk = '', $lk = '', $alias='') {
 		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
 		if ($fk == '') { $fk = $table.'_id';}
+		if ($lk == '') { $lk = $table.'_id'; }
+		//left join  ftable
+		// on  ltable.lk = falias.fk
+		$this->_relatedSingle[] = array(
+			'ftable'=>$table,
+			'ltable'=>$this->_table,
+			'lk'=>$lk,
+			'falias'=>$alias,
+			'fk'=>$fk
+		);
+	}
+
+	public function hasMany($table, $fk = '', $lk = '', $alias='') {
+		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
+		if ($fk == '') { $fk = $this->_table.'_id';}
 		if ($lk == '') { $lk = $this->_pkey; }
 		//left join  ftable
 		// on  ltable.lk = falias.fk
