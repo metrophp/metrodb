@@ -217,8 +217,8 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	 * @return string Error message
 	 */
 	function getLastError() {
-		$this->errorNumber = mysqli_errno();
-		$this->errorMessage = mysqli_error();
+		$this->errorNumber = mysqli_errno($this->driverId);
+		$this->errorMessage = mysqli_error($this->driverId);
 		return $this->errorMessage;
 	}
 
