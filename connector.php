@@ -395,67 +395,6 @@ class Metrodb_Connector {
 	}
 
 	/**
-	 * Prepare to stream a blob record
-	 *
-	 * @param string $table SQL table name
-	 * @param string $col   SQL column name
-	 * @param int    $id    Unique record id
-	 * @param int    $pct   Size of each blob chunk as percentage of total
-	 * @param string $idcol Name of column that holds identity if not table.'_id'
-	 * @return array stream handle with info needed for nextChunk()
-	 */
-	public function prepareBlobStream($table, $col, $id, $pct=10, $idcol='') {
-		$qc = $this->qc;
-		if ($idcol == '') {$idcol = $table.'_id';}
-		$this->queryOne('SELECT CHAR_LENGTH('.$qc.$col.$qc.') as bitlen from '.$qc.$table.$qc.' WHERE '.$qc.$idcol.$qc.' = '.sprintf('
-			%d',$id));
-		$ticket = array();
-		$ticket['table'] = $table;
-		$ticket['col']   = $col;
-		$ticket['id']    = $id;
-		$ticket['pct']   = $pct;
-		$ticket['idcol'] = $idcol;
-		$ticket['bytelen'] = $this->record['bitlen'];
-		$ticket['finished'] = false;
-		$ticket['byteeach'] = floor($ticket['bytelen'] * ($pct / 100));
-		$ticket['bytelast']  = $ticket['bytelen'] % ((1/$pct) * 100);
-		$ticket['pctdone'] = 0;
-		return $ticket;
-	}
-
-	/**
-	 * Select a percentage of a blob field
-	 *
-	 * @param $ticket required array from prepareBlobStream()
-	 */
-	public function nextStreamChunk(&$ticket) {
-		if ($ticket['finished']) { return false; }
-		$qc = $this->qc;
-
-		$_x = (floor($ticket['pctdone']/$ticket['pct']) * $ticket['byteeach']) + 1;
-		$_s = $ticket['byteeach'];
-
-		if ($ticket['finished'] == TRUE) {
-			return NULL;
-		}
-
-		if ($ticket['pctdone'] + $ticket['pct'] >= 100) {
-			//grab the uneven bits with this last pull
-			$_s += $ticket['bytelast'];
-			$this->queryOne('SELECT SUBSTR('.$qc.$ticket['col'].$qc.','.$_x.') 
-				AS '.$qc.'blobstream'.$qc.' FROM '.$ticket['table'].' WHERE '.$qc.$ticket['idcol'].$qc.' = '.sprintf('%d',$ticket['id']));
-		} else {
-			$this->queryOne('SELECT SUBSTR('.$qc.$ticket['col'].$qc.','.$_x.','.$_s.') 
-				AS '.$qc.'blobstream'.$qc.' FROM '.$ticket['table'].' WHERE '.$qc.$ticket['idcol'].$qc.' = '.sprintf('%d',$ticket['id']));
-		}
-		$ticket['pctdone'] += $ticket['pct'];
-		if ($ticket['pctdone'] >= 100) { 
-			$ticket['finished'] = TRUE;
-		}
-		return $this->record['blobstream'];
-	}
-
-	/**
 	 * Create a number of SQL statements which will
 	 * update the existing table to the required spec.
 	 */
