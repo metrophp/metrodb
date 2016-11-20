@@ -329,7 +329,7 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 		if (!is_object($this->driverId)) {
 			$this->connect();
 		}
-		$dbfields = $this->queryGetAll("SELECT * from sqlite_master where type = 'table' AND name = '$table'", FALSE);
+		$dbfields = $this->queryGetAll("SELECT * from sqlite_master where type = 'table' AND name = '$table'");
 		if (!$dbfields) {
 			return false;
 		}

@@ -289,7 +289,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 		if (is_resource($this->driverId)) {
 			$this->connect();
 		}
-		$dbfields = $this->queryGetAll("show columns from `$table`", FALSE);
+		$dbfields = $this->queryGetAll("show columns from `$table`");
 		//mysqli_list_fields is deprecated, by more powerful than show columns
 		#$dbfields = mysqli_list_fields($this->database, $table, $this->driverId);
 		if (!$dbfields) {

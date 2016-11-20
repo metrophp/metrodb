@@ -279,8 +279,8 @@ class Metrodb_Connector {
 	public function freeResult() {}
 
 
-	public function queryGetAll($query, $report=TRUE) {
-		$this->query($query, $report);
+	public function queryGetAll($query) {
+		$this->query($query);
 		$rows = array();
 		while($this->nextRecord()) {
 			$rows[] = $this->record;

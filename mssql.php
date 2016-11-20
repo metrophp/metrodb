@@ -360,7 +360,7 @@ class Metrodb_Mssql extends Metrodb_Connector {
 		if ($this->driverId == 0 ) {
 			$this->connect();
 		}
-		$dbfields = $this->queryGetAll("show columns from `$table`", FALSE);
+		$dbfields = $this->queryGetAll("show columns from `$table`");
 		//mssqllist_fields is deprecated, by more powerful than show columns
 		#$dbfields = mssqllist_fields($this->database, $table, $this->driverId);
 		if (!$dbfields) {
