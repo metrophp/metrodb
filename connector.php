@@ -174,7 +174,7 @@ class Metrodb_Connector {
 		$driver = self::loadDriver($driverName);
 		$driver->host = $_dsn['host'];
 		$driver->database = substr($_dsn['path'],1);
-		$driver->user = $_dsn['user'];
+		$driver->user = @$_dsn['user'];
 		$driver->password = @$_dsn['pass'];
 		$options = array();
 		if (array_key_exists('query', $_dsn)) {
