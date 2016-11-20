@@ -192,70 +192,6 @@ class Metrodb_Mysql extends Metrodb_Connector {
 
 
 	/**
-	 * Short hand for query() and nextRecord().
-	 *
-	 * @param string $sql SQL Command
-	 */
-	function queryOne($sql) {
-		$this->query($sql);
-		$this->nextRecord();
-		$this->freeResult();
-	}
-
-
-	/**
-	 * Short hand for query() and nextRecord().
-	 *
-	 * @param string $sql SQL Command
-	 * @return array Record
-	 */
-	function queryGetOne($sql) {
-		$this->queryOne($sql);
-		return $this->record;
-	}
-
-
-	/**
-	 * Short hand way to send a select statement.
-	 *
-	 * @param string $table  SQL table name
-	 * @param string $fields  Column names
-	 * @param string $where  Additional where clause
-	 * @param string $orderby Optional orderby clause
-	 */
-	function select($table, $fields = "*", $where = "", $orderby = "") {
-		if ($where) {
-			$where = " where $where";
-		}
-		if ($orderby) {
-			$orderby = " order by $orderby";
-		}
-		$sql = "select $fields from $table $where $orderby";
-		$this->query($sql);
-	}
-
-
-	/**
-	 * Short hand way to send a select statement and pull back one result.
-	 *
-	 * @param string $table  SQL table name
-	 * @param string $fields  Column names
-	 * @param string $where  Additional where clause
-	 * @param string $orderby Optional orderby clause
-	 */
-	function selectOne($table, $fields = "*", $where = "", $orderby = "") {
-		if ($where) {
-			$where = " where $where";
-		}
-		if ($orderby) {
-			$orderby = " order by $orderby";
-		}
-		$sql = "select $fields from $table $where $orderby";
-		$this->queryOne($sql);
-	}
-
-
-	/**
 	 * Moves resultSet cursor to beginning
 	 * @return void
 	 */
@@ -274,7 +210,6 @@ class Metrodb_Mysql extends Metrodb_Connector {
 		mysql_data_seek($this->resultSet, $row);
 		$this->row = $row;
 	}
-
 
 	/**
 	 * Retrieves last error message from the DB

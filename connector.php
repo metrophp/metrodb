@@ -279,13 +279,6 @@ class Metrodb_Connector {
 	public function freeResult() {}
 
 
-	/**
-	 * Short hand for query() and nextRecord().
-	 *
-	 * @param string $sql SQL Command
-	 */
-	public function queryOne($sql) {}
-
 	public function getAll($query) {
 		return $this->queryGetAll($query);
 	}
@@ -306,46 +299,6 @@ class Metrodb_Connector {
 		}
 		return $rows;
 	}
-
-	/**
-	 * Short hand way to send a select statement.
-	 *
-	 * @param string $table  SQL table name
-	 * @param string $fields  Column names
-	 * @param string $where  Additional where clause
-	 * @param string $orderby Optional orderby clause
-	 */
-	public function select($table, $fields = "*", $where = "", $orderby = "") {
-		if ($where) {
-			$where = " where $where";
-		}
-		if ($orderby) {
-			$orderby = " order by $orderby";
-		}
-		$sql = "select $fields from $table $where $orderby";
-		$this->query($sql);
-	}
-
-
-	/**
-	 * Short hand way to send a select statement and pull back one result.
-	 *
-	 * @param string $table  SQL table name
-	 * @param string $fields  Column names
-	 * @param string $where  Additional where clause
-	 * @param string $orderby Optional orderby clause
-	 */
-	public function selectOne($table, $fields = "*", $where = "", $orderby = "") {
-		if ($where) {
-			$where = " where $where";
-		}
-		if ($orderby) {
-			$orderby = " order by $orderby";
-		}
-		$sql = "select $fields from $table $where $orderby";
-		$this->queryOne($sql);
-	}
-
 
 	/**
 	 * Moves resultSet cursor to beginning
