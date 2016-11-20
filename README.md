@@ -131,3 +131,26 @@ le.
 | 1          | elm    | 1234 |
 | 99         | oak    | 4321 |
 ```
+
+Model Trait
+----
+The ModelTrait can be added to a regular POPO to make it automatically interact with a dataitem.
+
+```php
+class AddressModel {
+
+	use \Metrodb_ModelTrait
+	public $tableName = 'address';
+}
+
+$a = new AddressModel();
+$a->setStreet('123');
+$a->save();
+```
+
+The above is equivalent to 
+```
+$di = new Metrodb_Dataitem('address');
+$di->street = '123';
+$di->save();
+```
