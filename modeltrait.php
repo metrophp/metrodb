@@ -29,9 +29,7 @@ trait Metrodb_Modeltrait {
 	 */
 	public function load($id) {
 		$x = $this->dataitem->load($id);
-		if ($x) {
-			$this->hydrate();
-		}
+		$this->postLoad();
 		return $x;
 	}
 
@@ -40,14 +38,12 @@ trait Metrodb_Modeltrait {
 	 */
 	public function loadExisting() {
 		$x = $this->dataitem->loadExisting();
-		if ($x) {
-			$this->hydrate();
-		}
+		$this->postLoad();
 		return $x;
 	}
 
 
-	public function hydrate() {
+	public function postLoad() {
 	}
 
 	/**
