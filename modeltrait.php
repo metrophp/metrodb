@@ -1,9 +1,13 @@
 <?php
 
+/**
+ * This trait passes through access to undefined members to the 
+ * internal dataitem.  It will translate camelCase to snake_case
+ * UNLESS you define a property public $skipCaseChange = TRUE;
+ */
 trait Metrodb_Modeltrait {
 
 	public $dataitem   = NULL;
-	public $switchCase = TRUE;
 
 	public function __construct($dataitem=NULL) {
 		if($dataitem === NULL) {
@@ -61,7 +65,7 @@ trait Metrodb_Modeltrait {
 	}
 
 	public function __isset($key) {
-		if ($this->switchCase) {
+		if (!@$this->skipCaseChange) {
 			$lowk = $this->decamelize($key);
 			if (array_key_exists($lowk, $this->dataitem->_typeMap)) {
 				return TRUE;
@@ -74,7 +78,7 @@ trait Metrodb_Modeltrait {
 	}
 
 	public function __unset($key) {
-		if ($this->switchCase) {
+		if (!@$this->skipCaseChange) {
 			$lowk = $this->decamelize($key);
 			if (array_key_exists($lowk, $this->dataitem->_typeMap)) {
 				unset($this->dataitem->{$lowk});
@@ -87,23 +91,26 @@ trait Metrodb_Modeltrait {
 	}
 
 	/**
-	 * Try to update camel_case if it is defined in the dataitem's _typeMap
-	 * or if it is set on the dataitem itself
-	 * If not set the key as is on the dataitem
+	 * If this key exists on the data item already, update it and return
+	 * If not, try to switch camelCase to snake_case.
+	 * If $object->skipChangeCase == true don't munge the key at all
 	 */
-	public function __set($k, $v) {
-		if ($this->switchCase) {
-			$lowk = $this->decamelize($k);
-			if (array_key_exists($lowk, $this->dataitem->_typeMap)) {
-				$this->dataitem->{$lowk} = $v;
-				return;
-			}
-			if (isset($this->dataitem->{$lowk})) {
-				$this->dataitem->{$lowk} = $v;
-				return;
-			}
+	public function __set($key, $val) {
+		if (isset($this->dataitem->{$key})) {
+			$this->dataitem->{$key} = $val;
+			return;
 		}
-		$this->dataitem->{$k} = $v;
+
+		if (!@$this->skipCaseChange) {
+			$key = $this->decamelize($key);
+			/*
+			if (array_key_exists($lowk, $this->dataitem->_typeMap)) {
+				$this->dataitem->{$lowk} = $val;
+				return;
+			}
+			 */
+		}
+		$this->dataitem->{$key} = $val;
 	}
 
 	public function set($k, $v) {
@@ -112,7 +119,7 @@ trait Metrodb_Modeltrait {
 
 
 	public function __get($k) {
-		if ($this->switchCase) {
+		if (!@$this->skipCaseChange) {
 			$lowk = $this->decamelize($k);
 			if (array_key_exists($lowk, $this->dataitem->_typeMap)) {
 				return $this->dataitem->{$lowk};
@@ -143,7 +150,7 @@ trait Metrodb_Modeltrait {
 
 	public function __call($func, $args) {
 		if (substr($func, 0, 3) == 'get') {
-			if ($this->switchCase) {
+			if (!@$this->skipCaseChange) {
 				array_unshift($args, $this->decamelize(substr($func,3)));
 			} else {
 				array_unshift($args, $this->decamelize(substr($func,3)));
@@ -151,7 +158,7 @@ trait Metrodb_Modeltrait {
 			return call_user_func_array(array($this->dataitem, 'get'), $args);
 		}
 		if (substr($func, 0, 3) == 'set') {
-			if ($this->switchCase) {
+			if (!@$this->skipCaseChange) {
 				array_unshift($args, $this->decamelize(substr($func,3)));
 			} else {
 				array_unshift($args, $this->decamelize(substr($func,3)));
