@@ -50,7 +50,17 @@ trait Metrodb_Modeltrait {
 	 *
 	 */
 	public function save() {
-		return $this->dataitem->save();
+		if ($this->preSave()) {
+			return $this->dataitem->save();
+		}
+		return FALSE;
+	}
+
+	/**
+	 *
+	 */
+	public function preSave() {
+		return TRUE;
 	}
 
 	/**
