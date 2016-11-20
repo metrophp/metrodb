@@ -1,7 +1,7 @@
 <?php
 /**
  * The Metrodb_Dataitem class is a wrapper for sets of SQL data.
- * The item can *load *a single row, or *find* many rows 
+ * The item can *load *a single row, or *find* many rows
  * from multiple tables.
  *
  * Usage:
@@ -25,7 +25,7 @@ class Metrodb_Dataitem {
 	public $_excludes      = array();		//list of columns not to select
 	public $_cols          = array();		//list of columns for selects
 	public $_nuls          = array();		//list of columns that can hold null
-	public $_bins          = array();		//list of columns that can hold binary 
+	public $_bins          = array();		//list of columns that can hold binary
 	public $_uniqs         = array();		//list of columns that, together, act as a primary key
 	public $_limit         = -1;
 	public $_start         = -1;
@@ -69,7 +69,7 @@ class Metrodb_Dataitem {
 	 * doing what should be done when an empty
 	 * key is accessed anyway.
 	 */
-    public function __get($key) { 
+    public function __get($key) {
         if (!isset($this->{$key})) {
             return NULL;
         }
@@ -92,8 +92,8 @@ class Metrodb_Dataitem {
 	}
 
 	/**
-	 * If this table has no auto-incrment primary key, the 
-	 * combined values of these columns shall be considered 
+	 * If this table has no auto-incrment primary key, the
+	 * combined values of these columns shall be considered
 	 * unique.
 	 *
 	 * @param Array $cols  a list of cols that act as a primary key
@@ -136,7 +136,7 @@ class Metrodb_Dataitem {
 	/**
 	 * Return a value of this data item.
 	 *
-	 * @return mixed  value of data item's property 
+	 * @return mixed  value of data item's property
 	 */
 	public function get($key) {
 		if(isset($this->{$key})) {
@@ -204,14 +204,14 @@ class Metrodb_Dataitem {
 	/**
 	 * Load one record from the DB
 	 *
-	 * @param string $where  Optional: if an array, it is imploded with " and ", 
+	 * @param string $where  Optional: if an array, it is imploded with " and ",
 	 *   if it is a string, it is added as a condition for the pkey
 	 */
 	public function load($where='') {
 		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 		$whereQ = '';
 
-		//if something is passed in (not ''), 
+		//if something is passed in (not ''),
 		//but it is null or 0, then we need not to
 		//load anything because the calling script is probably expecting
 		//an ID from a loop or an array.  There is no need to explicitly
@@ -298,7 +298,7 @@ class Metrodb_Dataitem {
 	/**
 	 * Load multiple records from the DB
 	 *
-	 * @param string $where  Optional: if an array, it is imploded with " and ", 
+	 * @param string $where  Optional: if an array, it is imploded with " and ",
 	 *   if it is a string it is treated as the first part of the where clause
 	 */
 	public function find($where='') {
@@ -349,7 +349,7 @@ class Metrodb_Dataitem {
 	/**
 	 * Load multiple records from the DB
 	 *
-	 * @param string $where  Optional: if an array, it is imploded with " and ", 
+	 * @param string $where  Optional: if an array, it is imploded with " and ",
 	 *   if it is a string it is treated as the first part of the where clause.
 	 *
 	 * @return Array  a list of records as an associative array
@@ -438,8 +438,8 @@ class Metrodb_Dataitem {
 			return false;
 		}
 
-		$count = $db->record['total_rec']; 
-		//some group by clauses split the count(*) up into 
+		$count = $db->record['total_rec'];
+		//some group by clauses split the count(*) up into
 		// multiple rows. If this query
 		// has a group by return the size of the result set
 		if (count($this->_groupBy) > 0) {
@@ -522,10 +522,9 @@ class Metrodb_Dataitem {
 			if ( in_array($k, $this->_bins) ) {
 				$values[] = $db->escapeBinaryValue($vars[$k]);//"_binary'".mysql_real_escape_string($vars[$k])."'\n";
 			} else if (in_array($k,$this->_nuls) && $vars[$k] == NULL ) {
-				//intentionally doing a double equals here, 
+				//intentionally doing a double equals here,
 				// if the col is nullabe, try real hard to insert a NULL
 				$values[] = "NULL\n";
-
 			} else {
 				//add slashes works just like mysql_real_escape_string
 				// (for latin1 and UTF-8) but is faster and testable.
