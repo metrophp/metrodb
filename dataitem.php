@@ -778,7 +778,7 @@ class Metrodb_Dataitem {
 		}
 	}
 
-	public function hasManyToMany($table, $tableJ='', $tableJLk='', $tableJFk='', $tableFk='', $alias='') {
+	public function hasManyToMany($table, $alias='', $tableJ='', $tableJLk='', $tableJFk='', $tableFk='') {
 		if ($tableJLk == '') { $tableJLk = $this->_pkey;}
 		if ($tableJFk == '') { $tableJFk = $table.'_id';}
 		if ($tableFk  == '') { $tableFk  = $table.'_id';}
@@ -808,7 +808,7 @@ class Metrodb_Dataitem {
 	/**
 	 * Use when the foreign table has its primary key in this object's table.
 	 */
-	public function hasOne($table, $fk = '', $lk = '', $alias='') {
+	public function hasOne($table, $alias='', $fk = '', $lk = '') {
 		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
 		if ($fk == '') { $fk = $table.'_id';}
 		if ($lk == '') { $lk = $table.'_id'; }
@@ -823,7 +823,7 @@ class Metrodb_Dataitem {
 		);
 	}
 
-	public function hasMany($table, $fk = '', $lk = '', $alias='') {
+	public function hasMany($table, $alias='', $fk = '', $lk = '') {
 		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
 		if ($fk == '') { $fk = $this->_table.'_id';}
 		if ($lk == '') { $lk = $this->_pkey; }
