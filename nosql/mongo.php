@@ -12,7 +12,7 @@ class Metrodb_Nosql_Mongo extends Metrodb_Connector {
 	 * Uses the classes internal host,user,password, and database variables
 	 * @return void
 	 */
-	function connect() {
+	function connect($options) {
 		if (! class_exists('mongo')) {
 			return false;
 		}

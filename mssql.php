@@ -95,7 +95,7 @@ class Metrodb_Mssql extends Metrodb_Connector {
 	}
 
 
-	function exec($statementString) {
+	function exec($statementString, $bind=NULL) {
 		if ($this->driverId == 0 ) {
 			$this->connect();
 		}
