@@ -197,30 +197,6 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 
 
 	/**
-	 * Short hand for query() and nextRecord().
-	 *
-	 * @param string $sql SQL Command
-	 */
-	function queryOne($sql) {
-		$this->query($sql);
-		$this->nextRecord();
-		$this->freeResult();
-	}
-
-
-	/**
-	 * Short hand for query() and nextRecord().
-	 *
-	 * @param string $sql SQL Command
-	 * @return array Record
-	 */
-	function queryGetOne($sql) {
-		$this->queryOne($sql);
-		return $this->record;
-	}
-
-
-	/**
 	 * Moves resultSet cursor to beginning
 	 * @return void
 	 */
@@ -232,7 +208,6 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 		$resObj->reset();
 		$this->row = 0;
 	}
-
 
 	/**
 	 * Moves resultSet cursor to an aribtrary position
@@ -246,7 +221,6 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 			$this->nextRecord();
 		}
 	}
-
 
 	/**
 	 * Retrieves last error message from the DB
@@ -282,7 +256,6 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 	public function getInsertID() {
 		return $this->driverId->lastInsertRowID();
 	}
-
 
 	/**
 	 * Not implemented for SQLite3
