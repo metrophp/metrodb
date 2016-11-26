@@ -34,6 +34,18 @@ trait Metrodb_Modeltrait {
 	}
 
 	/**
+	 * Execute a find and wrap dataitems in this model
+	 */
+	public function find() {
+		$list = $this->dataitem->find();
+		foreach ($list as $_idx => $_l) {
+			$clazz = get_called_class();
+			$list[$_idx] = new $clazz($_l);
+		}
+		return $list;
+	}
+
+	/**
 	 *
 	 */
 	public function loadExisting() {
