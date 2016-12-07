@@ -369,19 +369,6 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 		return $this->driverId->escapeString($val);
 	}
 
-	public function escapeCharValue($val) {
-		return "'".addslashes(
-			$val
-		)."'";
-	}
-
-	public function escapeBinaryValue($val) {
-		return '\''.addcslashes(
-			$val,
-			"\x00\'\"\r\n"
-		).'\'';
-	}
-
 	public function dynamicCreateSql($dataitem) {
 		$sql = "";
 		//$props = $dataitem->__get_props();

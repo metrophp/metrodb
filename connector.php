@@ -552,4 +552,17 @@ class Metrodb_Connector {
 
 		return $sqlStmt;
 	}
+
+	public function escapeCharValue($val) {
+		return "'".addslashes(
+			$val
+		)."'";
+	}
+
+	public function escapeBinaryValue($val) {
+		return '\''.addcslashes(
+			$val,
+			"\x00\'\"\r\n"
+		).'\'';
+	}
 }
