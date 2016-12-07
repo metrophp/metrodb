@@ -19,7 +19,12 @@ class Metrodb_BlobStream {
 	public function __construct($connector, $table, $blobCol, $id, $pct=10, $idcol='') {
 		$qc = $connector->qc;
 		if ($idcol == '') {$idcol = $table.'_id';}
-		$rows = $connector->queryGetAll('SELECT CHAR_LENGTH('.$qc.$blobCol.$qc.') as charlen from '.$qc.$table.$qc.' WHERE '.$qc.$idcol.$qc.' = '.$id);
+		//TODO: move to drivers
+		$lenfun = 'CHAR_LENGTH';
+		if (strpos(strtolower(get_class($connector)), 'sqlite3') !== FALSE) {
+			$lenfun = 'LENGTH';
+		}
+		$rows = $connector->queryGetAll('SELECT '.$lenfun.'('.$qc.$blobCol.$qc.') as charlen from '.$qc.$table.$qc.' WHERE '.$qc.$idcol.$qc.' = '.$id);
 		$record = $rows[0];
 		$this->table        = $qc.$table.$qc;
 		$this->col          = $blobCol;
