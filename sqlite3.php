@@ -66,7 +66,7 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 
 		//docs say returns false on error, but actually throws Exception
 		try {
-			$resSet = $this->driverId->query($queryString);
+			$resSet = @$this->driverId->query($queryString);
 		} catch (Exception $e) {
 			//echo $e->getMessage()."\n";
 			//echo $queryString."\n";
