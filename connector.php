@@ -79,7 +79,8 @@ class Metrodb_Connector {
 		}
 		$x =& Metrodb_Connector::$connList[$dsn];
 		if (!$x) {
-			return FALSE;
+			//don't return false, always return some kind of object.
+			return new Metrodb_Connector();
 		}
 
 		// optimize the next two lines by only executing them on PHP5
