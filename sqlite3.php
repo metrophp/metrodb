@@ -306,50 +306,51 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 		if (!$dbfields) {
 			return false;
 		}
+		$createTable = $dbfields[0]['sql'];
+		$dbfields = explode("\n", $createTable);
+		//remove first and last lines
+		array_shift($dbfields);
+		array_pop($dbfields);
+
 		$returnFields = array();
 		foreach($dbfields as $_st) {
-			$name = $_st['Field'];
-			$type = $_st['Type'];
+			$parts = explode(" ", $_st);
+			$name = array_shift($parts);
+			$type = array_shift($parts);
+			$null = @$parts[0] == 'NULL';
+			$flags = '';
+			if ($null) {
+				$flags .= 'null ';
+			} else {
+				$flags .= 'not_null ';
+			}
+
 			$size = '';
 			if (strpos($type, '(') !== FALSE) {
 				$size = substr($type, strpos($type, '(')+1,  (strpos($type, ')') -strpos($type, '(')-1) );
 				$type = substr($type, 0, strpos($type, '('));
 			}
+			//TODO: parse default values, auto increment flags, and sign/unsigned
+			/*
 			$def = $_st['Default'];
 			$flags = '';
-			if ($_st['Null'] == 'NO') {
-				$null = 'NOT NULL';
-				$flags .= 'not_null ';
-			} else {
-				$null = 'NULL';
-				$flags .= 'null ';
-			}
 			if (stripos($_st['Type'], 'unsigned') !== FALSE) {
 				$flags .= 'unsigned ';
 			}
 			if (stripos($_st['Extra'], 'auto_increment') !== FALSE) {
 				$flags .= 'auto_increment ';
 			}
-
+			*/
 			$returnFields[] = array(
 				'name'=>  $name,
 				'type'=>  $type,
-				'len' =>  $size,
-				'flags'=> $flags,
-				'def'  => $def,
-				'null' => $null);
-
-				/*
-			$field['name'][$name] = $name;
-			$field['type'][$name] = $type;
-			$field['len'][$name]  = $size;
-			$field['flags'][$name] = $flags;
-			$field['def'][$name] = $def;
-			$field['null'][$name] = $null;
-				 */
+				'len' =>  @$size,
+				'flags'=> @$flags,
+				'def'  => @$def,
+				'null' => @$null
+			);
 		}
 		return $returnFields;
-		//return $field;
 	}
 
 	function setType($type='ASSOC') {
