@@ -449,4 +449,7 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 		return $sqlStmt;
 	}
 
+	public function escapeCharValue($val) {
+		return "'".str_replace("'", "''", $val)."'";
+	}
 }
