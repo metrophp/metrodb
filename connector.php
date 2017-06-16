@@ -44,6 +44,9 @@ class Metrodb_Connector {
 
 	static public $connList = array(); //cache of objects per DSN
 
+	static public $logList = array();
+	public $log            = NULL;
+
 
 	static public function dsnForTable($tableName, $dsn='') {
 		static $g_db_handle;
@@ -97,6 +100,14 @@ class Metrodb_Connector {
 		// nothing has access to old query results
 		// keeps the same connection Id though
 		return $copy;
+	}
+
+	static public function setLoggerForDsn($dsn, $log) {
+		Metrodb_Connector::$logList[$dsn] = $log;
+	}
+
+	public function setLogger($log) {
+		$this->log = $log;
 	}
 
 	/**
@@ -189,6 +200,10 @@ class Metrodb_Connector {
 			$driver->connect($options);
 		} catch (Exception $e) {
 			//probably database not available.
+		}
+
+		if (array_key_exists($dsn, Metrodb_Connector::$logList)) {
+			$driver->setLogger(Metrodb_Connector::$logList[$dsn]);
 		}
 
 		Metrodb_Connector::$connList[$dsn] = $driver;

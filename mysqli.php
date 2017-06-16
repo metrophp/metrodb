@@ -55,7 +55,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	public function query($queryString) {
 
 		$this->queryString = $queryString;
-		$start = microtime();
+		$start = microtime(1);
 		if (is_resource($this->driverId) ) {
 			$this->connect();
 		}
@@ -72,6 +72,9 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 		if (!$resSet ) {
 			$this->errorNumber = mysqli_errno($this->driverId);
 			$this->errorMessage = mysqli_error($this->driverId);
+			if ($this->log) {
+				$this->log->error("Query failed ".$this->errorMessage." ms.", array('sql'=>$queryString));
+			}
 			return false;
 		}
 		if (is_object($resSet) ) {
@@ -79,20 +82,12 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 			//TODO: sometimes use mysqli_use_result
 			mysqli_store_result($this->driverId);
 		}
-		return true;
 
-		/*
-		$end = microtime();
-		$j = split(" ", $start);
-		$s = $j[1] = $j[0];
-		$f = split(" ", $end);
-		$e = $f[1] = $f[0];
-		if (($e-$s) >.1) {
-			// slow query
+		$end = microtime(1);
+		if ($this->log) {
+			$this->log->debug("Query executed in: ".(($end - $start)*1000)." ms.", array('sql'=>$queryString));
 		}
-		$this->exectime = abs($e-$s);
-		$this->log();
-		 */
+		return true;
 	}
 
 
