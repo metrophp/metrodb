@@ -563,19 +563,29 @@ class Metrodb_Dataitem {
 		$qc   = $db->qc;
 		$sql = "UPDATE ".$qc.$this->getTable().$qc." SET \n";
 		$vars = get_object_vars($this);
-		$keys = array_keys($vars);
 
 		$set = '';
 
+		//remove pkey from update statement
+		if (isset($this->_pkey) && $this->_pkey !== NULL) {
+			unset($vars[$this->_pkey]);
+		}
+		//remove object vars that begin with _
+		foreach ($vars as $_k=>$_v) {
+			if (substr($_k,0,1) == '_') {
+				unset($vars[$_k]);
+			}
+		}
+
+
 		// auto update updated_on with current timestamp
 		//#metadata
-		if (!in_array('updated_on', $keys)) {
-			$keys[]             = 'updated_on';
+		if (!array_key_exists('updated_on', $vars)) {
+			$vars['updated_on'] = time();
 		}
-		$vars['updated_on'] = time();
+		$keys = array_keys($vars);
 
 		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
 			if (strlen($set) ) { $set .= ', ';}
 			if ( in_array($k,$this->_bins) ) {
 				$set .= $qc.$k.$qc ." = ".$db->escapeBinaryValue($vars[$k])."\n";
@@ -586,6 +596,7 @@ class Metrodb_Dataitem {
 			}
 		}
 		$sql .= $set;
+		//handle multi-col primary keys
 		if (!isset($this->_pkey) || $this->_pkey === NULL) {
 			$sql .= ' WHERE ';
 			$atom = '';
