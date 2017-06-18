@@ -73,7 +73,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 			$this->errorNumber = mysqli_errno($this->driverId);
 			$this->errorMessage = mysqli_error($this->driverId);
 			if ($this->log) {
-				$this->log->error("Query failed ".$this->errorMessage." ms.", array('sql'=>$queryString));
+				$this->log->error("Query failed ".$this->errorMessage, array('sql'=>$queryString));
 			}
 			return false;
 		}
