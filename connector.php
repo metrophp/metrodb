@@ -196,14 +196,16 @@ class Metrodb_Connector {
 		if (array_key_exists('port', $_dsn)) {
 			$driver->port = $_dsn['port'];
 		}
+
+		//set logger before trying to connect
+		if (array_key_exists($dsn, Metrodb_Connector::$logList)) {
+			$driver->setLogger(Metrodb_Connector::$logList[$dsn]);
+		}
+
 		try {
 			$driver->connect($options);
 		} catch (Exception $e) {
 			//probably database not available.
-		}
-
-		if (array_key_exists($dsn, Metrodb_Connector::$logList)) {
-			$driver->setLogger(Metrodb_Connector::$logList[$dsn]);
 		}
 
 		Metrodb_Connector::$connList[$dsn] = $driver;
