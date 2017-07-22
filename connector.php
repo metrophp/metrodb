@@ -200,6 +200,10 @@ class Metrodb_Connector {
 		//set logger before trying to connect
 		if (array_key_exists($dsn, Metrodb_Connector::$logList)) {
 			$driver->setLogger(Metrodb_Connector::$logList[$dsn]);
+		} else {
+			if (array_key_exists('default', Metrodb_Connector::$logList)) {
+				$driver->setLogger(Metrodb_Connector::$logList['default']);
+			}
 		}
 
 		try {
