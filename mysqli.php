@@ -53,6 +53,10 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 		$this->qc = '"';
 	}
 
+	public function setAutocommitOff() {
+		$this->exec("SET autocommit=0");
+	}
+
 	/**
 	 * Send query to the DB
 	 *
