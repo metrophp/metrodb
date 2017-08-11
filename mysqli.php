@@ -96,6 +96,8 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 			$this->connect();
 		}
 
+		$start = microtime(1);
+
 		$stmt = mysqli_prepare($this->driverId, $statementString);
 		if (!$stmt) {
 			return FALSE;
@@ -114,7 +116,13 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 			}
 			call_user_func_array(array($stmt, 'bind_param'), $args);
 		}
-		return mysqli_stmt_execute($stmt);
+
+		$x =  mysqli_stmt_execute($stmt);
+		$end = microtime(1);
+		if ($this->log) {
+			$this->log->debug("Statement executed in: ".(sprintf("%0.4f", ($end - $start)*1000))." ms.", array('sql'=>$statementString));
+		}
+		return $x;
 //		return mysqli_query($this->driverId, $statementString);
 	}
 
