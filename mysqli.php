@@ -18,6 +18,10 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	 */
 	public function connect($options=array()) {
 		if (! function_exists('mysqli_connect')) {
+			if ($this->log) {
+				$this->log->emerg("mysqli extension not available.");
+			}
+
 			return false;
 		}
 		if (!is_resource($this->driverId)) {
@@ -27,6 +31,10 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 				$this->driverId = mysqli_connect($this->host, $this->user, $this->password, '', $this->port);
 			}
 			if (!$this->driverId) {
+				if ($this->log) {
+					$this->log->alert("Unable to connect to database: ".$this->database);
+				}
+
 				throw new Exception("Unable to connect to database");
 			}
 		}
