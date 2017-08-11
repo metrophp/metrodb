@@ -85,7 +85,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 
 		$end = microtime(1);
 		if ($this->log) {
-			$this->log->debug("Query executed in: ".(($end - $start)*1000)." ms.", array('sql'=>$queryString));
+			$this->log->debug("Query executed in: ".(sprintf("%0.4f", ($end - $start)*1000))." ms.", array('sql'=>$queryString));
 		}
 		return true;
 	}
