@@ -362,6 +362,7 @@ class Metrodb_Connector {
 	 */
 	public function getNumRows() {}
 
+
 	/**
 	 * for commands like "set FLAG=1" or "BEGIN TRANSACTION"
 	 * @see executeStatement($stmt)
@@ -416,162 +417,19 @@ class Metrodb_Connector {
 		return $this->exec("TRUNCATE ".$qc.$tbl.$qc);
 	}
 
-	/**
-	 * Create a number of SQL statements which will
-	 * update the existing table to the required spec.
-	 */
-	public function dynamicAlterSql($cols, $dataitem) {
-		$sqlDefs = array();
-		$finalTypes = array();
-
-		$colNames = array();
-		foreach ($cols as $_col) {
-			$colNames[] = $_col['name'];
-		}
-
-		$finalTypes = array();
-		$vars = get_object_vars($dataitem);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
-			if (in_array($k, $colNames)) {
-				//we don't need to alter existing columsn
-				continue;
-			}
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				$finalTypes[$k] = "string";
-			}
-		}
-
-		$tableName = $this->qc.$dataitem->_table.$this->qc;
-		/**
-		 * build SQL
-		 */
-		foreach($finalTypes as $propName=>$type) {
-			$propName  = $this->qc.$propName.$this->qc;
-			switch($type) {
-			case "email":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName VARCHAR(255)  NULL DEFAULT NULL; \n";
-				break;
-			case "ts":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) unsigned NULL DEFAULT NULL; \n";
-				break;
-			case "int":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
-				break;
-			case "text":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName longtext NULL; \n";
-				break;
-			case "lob":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName longblob NULL; \n";
-				break;
-			case "date":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName datetime NULL DEFAULT NULL; \n";
-				break;
-			default:
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName VARCHAR(255) NULL DEFAULT NULL; \n";
-				break;
-
-			}
-		}
-
-		if ($this->collation != '') {
-			$sqlDefs[] = "\n\nALTER TABLE $tableName ".$this->collation.";";
-		}
-
-		return $sqlDefs;
-	}
-
-	public function dynamicCreateSql($dataitem) {
-		$sql = "";
-		//$props = $dataitem->__get_props();
-		$finalTypes = array('created_on'=>'ts', 'updated_on'=>'ts');
-
-		$vars = get_object_vars($dataitem);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
-
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				//only override created_on and update_on explicitly
-				if (!isset($finalTypes[$k])) {
-					$finalTypes[$k] = "string";
-				}
-			}
-		}
-
-		$tableName = $this->qc.$dataitem->_table.$this->qc;
-		/**
-		 * build SQL
-		 */
-		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
-
-		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $finalTypes)) {
-			$sqlDefs[$dataitem->_pkey] = $this->qc.$dataitem->_pkey.$this->qc." int(11) unsigned auto_increment primary key";
-		}
-
-		foreach($finalTypes as $propName=>$type) {
-			$colName = $this->qc.$propName.$this->qc;
-			switch($type) {
-			case "email":
-				$sqlDefs[$propName] = "$colName varchar(255)";
-				break;
-			case "ts":
-				$sqlDefs[$propName] = "$colName int(11) unsigned NULL DEFAULT NULL";
-				break;
-			case "int":
-				$sqlDefs[$propName] = "$colName int(11) NULL";
-				break;
-			case "text":
-				$sqlDefs[$propName] = "$colName longtext NULL";
-				break;
-			case "lob":
-				$sqlDefs[$propName] = "$colName longblob NULL";
-				break;
-			case "date":
-				$sqlDefs[$propName] = "$colName datetime NULL";
-				break;
-			default:
-				$sqlDefs[$propName] = "$colName varchar(255)";
-				break;
-
-			}
-		}
-
-		$sql .= implode(",\n",$sqlDefs);
-		$sql .= "\n) ". $this->tableOpts.";";
-
-		if ($this->collation != '') {
-			$sqlStmt = array($sql,  "ALTER TABLE $tableName ".$this->collation);
+	public function getSchema() {
+		$thisClassNameParts = explode('_', get_class($this));
+		$driverName         = strtolower($thisClassNameParts[1]);
+		$driverClassName    = 'Metrodb_Schema'.$driverName;
+		if (class_exists('Metrodb_Schema'.$driverName, true)) {
+			$driver = new $driverClassName;
 		} else {
-			$sqlStmt = array($sql);
+			include_once( dirname(__FILE__).'/schema'.$driverName.'.php');
+			$driver = new $driverClassName;
 		}
-
-		//create unique key on multiple columns
-		if ( count($dataitem->_uniqs ) ) {
-			$sqlStmt[] = "ALTER TABLE ".$tableName." ADD UNIQUE INDEX ".$this->qc."unique_idx".$this->qc." (".implode(',', $dataitem->_uniqs).") ";
-		}
-
-		return $sqlStmt;
+		include_once( dirname(__FILE__).'/schema.php');
+		$schema = new Metrodb_Schema($this, $driver );
+		return $schema;
 	}
 
 	public function escapeCharValue($val) {

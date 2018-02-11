@@ -785,6 +785,7 @@ class Metrodb_Dataitem {
 		$this->_groupBy[] = $col;
 	}
 
+	/*
 	public function initBlank() {
 		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 		$columns = $db->getTableColumns($this->_table);
@@ -793,6 +794,7 @@ class Metrodb_Dataitem {
 			$this->{$_col['name']} = $_col['def'];
 		}
 	}
+	 */
 
 	public function hasManyToMany($table, $alias='', $tableJ='', $tableJLk='', $tableJFk='', $tableFk='') {
 		if ($tableJLk == '') { $tableJLk = $this->_pkey;}
@@ -889,11 +891,12 @@ class Metrodb_Dataitem {
 	 */
 	public function dynamicReload($db, $whereQ = '') {
 
-		$cols = $db->getTableColumns($this->_table);
+		$schema = $db->getSchema();
+		$cols   = $schema->getTableColumns($this->_table);
 		if (!$cols) {
-			$sqlDefs = $db->dynamicCreateSql($this);
+			$sqlDefs = $schema->dynamicCreateSql($this);
 		} else {
-			$sqlDefs = $db->dynamicAlterSql($cols, $this);
+			$sqlDefs = $schema->dynamicAlterSql($cols, $this);
 		}
 		foreach ($sqlDefs as $sql) {
 			$db->query($sql);
@@ -910,11 +913,12 @@ class Metrodb_Dataitem {
 	 */
 	public function dynamicResave($db, $doUpdate=FALSE) {
 
-		$cols = $db->getTableColumns($this->_table);
+		$schema = $db->getSchema();
+		$cols   = $schema->getTableColumns($this->_table);
 		if (!$cols) {
-			$sqlDefs = $db->dynamicCreateSql($this);
+			$sqlDefs = $schema->dynamicCreateSql($this);
 		} else {
-			$sqlDefs = $db->dynamicAlterSql($cols, $this);
+			$sqlDefs = $schema->dynamicAlterSql($cols, $this);
 		}
 		foreach ($sqlDefs as $sql) {
 			$db->query($sql);
