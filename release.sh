@@ -1,4 +1,3 @@
-rm -f metrodb
-ln -s . metrodb
 tag=$(git describe --tags)
-zip metrodb-$tag.zip  metrodb/*.php metrodb/nosql/mongo.php metrodb/README.md metrodb/composer.json
+tar -czvf metrodb-$tag.tar.gz  --transform 's,^,/metrodb/,' *.php README.md composer.json
+#zip metrodb-$tag.zip  metrodb/*.php metrodb/README.md metrodb/composer.json
