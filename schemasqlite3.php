@@ -1,6 +1,5 @@
 <?php
-
-class Metrodb_Schemamysqli {
+class Metrodb_Schemasqlite3 {
 
 	public function _getTables($conn) {
 		$conn->query("show tables");
@@ -38,7 +37,7 @@ class Metrodb_Schemamysqli {
 
 	public function _getTableDef($conn, $tableName) {
 
-		$dbfields = $conn->queryGetAll("show columns from `$tableName`");
+		$dbfields = $conn->queryGetAll("PRAGMA table_info($tableName)");
 		//mysqli_list_fields is deprecated, by more powerful than show columns
 		#$dbfields = mysqli_list_fields($conn->database, $table, $conn->driverId);
 		if (!$dbfields) {
@@ -62,9 +61,11 @@ class Metrodb_Schemamysqli {
 				$null = 'NULL';
 				$flags .= 'null ';
 			}
+			/*
 			if (stripos($_st['Type'], 'unsigned') !== FALSE) {
-				$flags .= 'unsigned ';
+//				$flags .= 'unsigned ';
 			}
+			 */
 			if (stripos($_st['Extra'], 'auto_increment') !== FALSE) {
 				$flags .= 'auto_increment ';
 			}
@@ -82,85 +83,7 @@ class Metrodb_Schemamysqli {
 		return ['table'=>$tableName, 'fields'=>$returnFields, 'indexes'=>[$indexList]];
 	}
 
-	public function getDynamicCreateSql($conn, $dataitem) {
-		$qc  = $conn->qc;
-		$sql = "";
-		//$props = $dataitem->__get_props();
-		$finalTypes = array('created_on'=>'ts', 'updated_on'=>'ts');
-
-		$vars   = get_object_vars($dataitem);
-		$keys   = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
-
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				//only override created_on and update_on explicitly
-				if (!isset($finalTypes[$k])) {
-					$finalTypes[$k] = "string";
-				}
-			}
-		}
-
-		$tableName = $qc.$dataitem->_table.$qc;
-		// build SQL
-		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
-
-		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $finalTypes)) {
-			$sqlDefs[$dataitem->_pkey] = $qc.$dataitem->_pkey.$qc." int(11) auto_increment  primary key";
-		}
-
-		foreach($finalTypes as $propName=>$type) {
-			$colName = $qc.$propName.$qc;
-			switch($type) {
-			case "email":
-				$sqlDefs[$propName] = "$colName varchar(255)";
-				break;
-			case "ts":
-				$sqlDefs[$propName] = "$colName int(11) NULL DEFAULT NULL";
-				break;
-			case "int":
-				$sqlDefs[$propName] = "$colName int(11) NULL";
-				break;
-			case "text":
-				$sqlDefs[$propName] = "$colName longtext NULL";
-				break;
-			case "lob":
-				$sqlDefs[$propName] = "$colName longblob NULL";
-				break;
-			case "date":
-				$sqlDefs[$propName] = "$colName datetime NULL";
-				break;
-			default:
-				$sqlDefs[$propName] = "$colName varchar(255)";
-				break;
-
-			}
-		}
-
-		$sql .= implode(",\n",$sqlDefs);
-		$sql .= "\n) ". $conn->tableOpts.";";
-
-		if ($conn->collation != '') {
-			$sqlStmt = array($sql,  "ALTER TABLE $tableName ".$conn->collation);
-		} else {
-			$sqlStmt = array($sql);
-		}
-
-		//create unique key on multiple columns
-		if ( @count($dataitem->_uniqs ) ) {
-			$sqlStmt[] = "ALTER TABLE ".$tableName." ADD UNIQUE INDEX ".$qc."unique_idx".$qc." (".implode(',', $dataitem->_uniqs).") ";
-		}
-		return $sqlStmt;
-	}
-
-
- 	public function getDynamicAlterSql($conn, $cols, $dataitem) {
+	public function getDynamicAlterSql($conn, $cols, $dataitem) {
 		$qc         = $conn->qc;
 		$sqlDefs    = array();
 		$finalTypes = array();
@@ -203,7 +126,7 @@ class Metrodb_Schemamysqli {
 				break;
 			case "ts":
 				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) unsigned NULL DEFAULT NULL; \n";
+					ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
 				break;
 			case "int":
 				$sqlDefs[] = "ALTER TABLE $tableName
@@ -225,6 +148,7 @@ class Metrodb_Schemamysqli {
 				$sqlDefs[] = "ALTER TABLE $tableName
 					ADD COLUMN $propName VARCHAR(255) NULL DEFAULT NULL; \n";
 				break;
+
 			}
 		}
 
@@ -234,4 +158,85 @@ class Metrodb_Schemamysqli {
 
 		return $sqlDefs;
 	}
+
+
+	public function getDynamicCreateSql($conn, $dataitem) {
+		$sql = "";
+		$finalTypes = array('created_on'=>'ts', 'updated_on'=>'ts');
+
+		$vars = get_object_vars($dataitem);
+		$keys = array_keys($vars);
+		$fields = array();
+		$values = array();
+		foreach ($keys as $k) {
+			if (substr($k,0,1) == '_') { continue; }
+			//fix for SQLITE
+			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
+
+			if (array_key_exists($k, $dataitem->_typeMap)) {
+				$finalTypes[$k] = $dataitem->_typeMap[$k];
+			} else {
+				//only override created_on and update_on explicitly
+				if (!isset($finalTypes[$k])) {
+					$finalTypes[$k] = "string";
+				}
+			}
+		}
+
+		$qc = $conn->qc;
+		$tableName = $qc.$dataitem->_table.$qc;
+		/**
+		 * build SQL
+		 */
+		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
+
+		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $finalTypes)) {
+			$sqlDefs[$dataitem->_pkey] = $qc.$dataitem->_pkey.$qc." INTEGER PRIMARY KEY AUTOINCREMENT";
+		}
+
+		foreach($finalTypes as $propName=>$type) {
+			$colName = $qc.$propName.$qc;
+			switch($type) {
+			case "email":
+				$sqlDefs[$propName] = "$colName varchar(255)";
+				break;
+			case "ts":
+				$sqlDefs[$propName] = "$colName int(11) NULL DEFAULT NULL";
+				break;
+			case "int":
+				$sqlDefs[$propName] = "$colName int(11) NULL";
+				break;
+			case "text":
+				$sqlDefs[$propName] = "$colName longtext NULL";
+				break;
+			case "lob":
+				$sqlDefs[$propName] = "$colName longblob NULL";
+				break;
+			case "date":
+				$sqlDefs[$propName] = "$colName datetime NULL";
+				break;
+			default:
+				$sqlDefs[$propName] = "$colName varchar(255)";
+				break;
+
+			}
+		}
+
+		$sql .= implode(",\n",$sqlDefs);
+		$sql .= "\n) ". $conn->tableOpts.";";
+
+		if ($conn->collation != '') {
+			$sqlStmt = array($sql,  "ALTER TABLE $tableName ".$conn->collation);
+		} else {
+			$sqlStmt = array($sql);
+		}
+
+		//create unique key on multiple columns
+		if ( count($dataitem->_uniqs ) ) {
+			$sqlStmt[] = "CREATE UNIQUE INDEX ".$qc."unique_idx".$qc." ON ".$tableName." (".implode(',', $dataitem->_uniqs).") ";
+		}
+
+		return $sqlStmt;
+	}
+
 }
