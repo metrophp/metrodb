@@ -15,8 +15,7 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 		$child  = new Metrodb_Dataitem('child');
 		$child->set('title', 'test child');
 		$child->set('parent_id', 1);
-		$child->save();
-
+		$childId = $child->save();
 
 		$child  = new Metrodb_Dataitem('child');
 		$child->set('title', 'test child 2');
@@ -35,7 +34,7 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 		$finder = new Metrodb_Dataitem('child');
 		$finder->_cols[] = 'child.*';
 		$finder->hasOne('parent');
-		$finder->andWhere('child_id', 1);
+		$finder->andWhere('child_id', $childId);
 		$result = $finder->findAsArray();
 
 		$this->assertEquals(1, count($result));
@@ -67,7 +66,6 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 		$finder->_cols[] = 'parent.*, TC.child_id';
 		$finder->hasOne('child', 'TC', 'parent_id', 'parent_id');
 		$finder->andWhere('parent.parent_id', 2);
-		//echo $finder->echoSelect();
 		$result = $finder->findAsArray();
 
 		$this->assertEquals(1, count($result));
