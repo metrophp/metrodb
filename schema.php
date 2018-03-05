@@ -41,19 +41,98 @@ class Metrodb_Schema {
 		return $table['fields'];
 	}
 
+	public function getMissingColumns($tableDef, $dataitem) {
+		$colNames = [];
+		if (is_array($tableDef)) {
+			if (array_key_exists('fields', $tableDef)) {
+				foreach ($tableDef['fields'] as $_col) {
+					$colNames[] = $_col['name'];
+				}
+			} else {
+				foreach ($tableDef as $_col) {
+					$colNames[] = $_col['name'];
+				}
+			}
+		}
+		$finalTypes = array();
+		$vars       = get_object_vars($dataitem);
+		$keys       = array_keys($vars);
+		$fields     = array();
+		$values     = array();
+		foreach ($keys as $k) {
+			if (substr($k,0,1) == '_') { continue; }
+			//fix for SQLITE
+			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
+			if (in_array($k, $colNames)) {
+				//we don't need to alter existing columns
+				continue;
+			}
+			if (array_key_exists($k, $dataitem->_typeMap)) {
+				$finalTypes[$k] = $dataitem->_typeMap[$k];
+			} else {
+				$finalTypes[$k] = "string";
+			}
+		}
+
+		$fieldList = [];
+		foreach ($finalTypes as $k=>$type) {
+			$fieldList[] = $this->schemaDriver->sqlDefForType($k, $type);
+		}
+		return $fieldList;
+	}
+
+	public function makeTableDef($dataitem) {
+
+		$tableName = $dataitem->_table;
+		$fieldList    = [];
+		$indexList    = [];
+
+		$vars       = get_object_vars($dataitem);
+		$keys       = array_keys($vars);
+
+		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $keys)){
+			$fieldList[] = array(
+				'name'=>  $dataitem->_pkey,
+				'type'=>  'int',
+				'len' =>  11,
+				'pk'  =>   1,
+				'us'  =>   1,
+				'def'  => NULL,
+				'null' => FALSE);
+
+		}
+		foreach ($keys as $k) {
+			if (substr($k,0,1) == '_') { continue; }
+
+			if ($dataitem->_pkey !== NULL && $dataitem->_pkey == $k){
+				continue;
+			}
+
+			if (array_key_exists($k, $dataitem->_typeMap)) {
+				$type = $dataitem->_typeMap[$k];
+			} else {
+				$type = "string";
+			}
+			$fieldList[] = $this->schemaDriver->sqlDefForType($k, $type);
+		}
+
+		return ['table'=>$tableName, 'fields'=>$fieldList, 'indexes'=>[$indexList]];
+	}
+
 	/**
 	 * Create a number of SQL statements which will
 	 * update the existing table to the required spec.
 	 */
 	public function dynamicAlterSql($cols, $dataitem) {
-		return $this->schemaDriver->getDynamicAlterSql($this->conn, $cols, $dataitem);
+		return $this->schemaDriver->getDynamicAlterSql($this->conn, $cols, $dataitem->_table);
 	}
 
 	/**
 	 * Create a number of SQL statements which will
 	 * create a new table
 	 */
-	public function dynamicCreateSql( $dataitem) {
-		return $this->schemaDriver->getDynamicCreateSql($this->conn, $dataitem);
+	public function dynamicCreateSql($dataitem) {
+		$tableDef = $this->makeTableDef($dataitem);
+		return $this->schemaDriver->getDynamicCreateSql($this->conn, $tableDef);
 	}
 }

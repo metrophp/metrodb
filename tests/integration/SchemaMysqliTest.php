@@ -7,7 +7,12 @@ include_once(dirname(__FILE__).'/../../schemamysqli.php');
 class Metrodb_Tests_Integration_SchemaMysqli extends PHPUnit_Framework_TestCase { 
 
 	public function setUp() {
-		$this->default = Metrodb_Connector::getHandle('default');
+		$db = Metrodb_Connector::getHandle('default');
+		if (strpos(strtolower(get_class($db)),'mysql') == FALSE) {
+			$this->markTestSkipped(
+				'The the default db driver is not Mysqli.'
+			);
+		}
 	}
 
 	public function test_get_table_list_returns_array() {
@@ -17,6 +22,7 @@ class Metrodb_Tests_Integration_SchemaMysqli extends PHPUnit_Framework_TestCase 
 		$this->assertTrue( is_array($t) );
 	}
 
+	/*
 	public function test_get_table_def() {
 		$schema = new Metrodb_Schema('default', new Metrodb_Schemamysqli() );
 
@@ -27,4 +33,5 @@ class Metrodb_Tests_Integration_SchemaMysqli extends PHPUnit_Framework_TestCase 
 		$this->assertTrue( is_array($t['indexes'][0]['PRIMARY']) );
 		$this->assertEquals( $t['table'], 'user_login' );
 	}
+	 */
 }

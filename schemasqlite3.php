@@ -2,25 +2,23 @@
 class Metrodb_Schemasqlite3 {
 
 	public function _getTables($conn) {
-		$conn->query("show tables");
-		$j = $conn->RESULT_TYPE;
-		$conn->RESULT_TYPE = MYSQLI_BOTH;
+		$conn->query("SELECT * FROM  sqlite_master where type='table'");
 
 		$x = array();
 		while ($conn->nextRecord()) {
-			$x[] = $conn->record[0];
+			$x[] = $conn->record['tbl_name'];
 		}
-		$conn->RESULT_TYPE = $j;
 		return $x;
 	}
 
 	public function _getTableIndexes($conn, $tableName) {
-		$conn->query("show index from `$tableName`");
+		$conn->query("SELECT * FROM  sqlite_master where type='index' and tbl_name='$tableName'");
 		$_idx = [];
 		while ($conn->nextRecord()) {
+			++$seq_in_idx;
 			extract($conn->record);
-			$_idx[$Key_name][$Seq_in_index]['column'] = $Column_name;
-			$_idx[$Key_name][$Seq_in_index]['unique'] = $Non_unique;
+			$_idx[$name][$seq_in_idx]['column']     = $name;
+			$_idx[$Key_name][$seq_in_idx]['unique'] = $name;
 		}
 		return $_idx;
 	}
@@ -37,7 +35,12 @@ class Metrodb_Schemasqlite3 {
 
 	public function _getTableDef($conn, $tableName) {
 
-		$dbfields = $conn->queryGetAll("PRAGMA table_info($tableName)");
+		//$dbfields = $conn->query("select * from sqlite_master where type='table' and tbl_name ='$tableName'");
+		$dbfields = $conn->query("PRAGMA table_info($tableName)");
+		$dbfields = [];
+		while ($conn->nextRecord()) {
+			$dbfields[] = $conn->record;
+		}
 		//mysqli_list_fields is deprecated, by more powerful than show columns
 		#$dbfields = mysqli_list_fields($conn->database, $table, $conn->driverId);
 		if (!$dbfields) {
@@ -45,28 +48,26 @@ class Metrodb_Schemasqlite3 {
 		}
 		$returnFields = array();
 		foreach($dbfields as $_st) {
-			$name = $_st['Field'];
-			$type = $_st['Type'];
+			$name = $_st['name'];
+			$type = $_st['type'];
 			$size = '';
+			/*
 			if (strpos($type, '(') !== FALSE) {
 				$size = substr($type, strpos($type, '(')+1,  (strpos($type, ')') -strpos($type, '(')-1) );
 				$type = substr($type, 0, strpos($type, '('));
 			}
-			$def = $_st['Default'];
-			$flags = '';
-			if ($_st['Null'] == 'NO') {
-				$null = 'NOT NULL';
-				$flags .= 'not_null ';
-			} else {
-				$null = 'NULL';
-				$flags .= 'null ';
-			}
-			/*
-			if (stripos($_st['Type'], 'unsigned') !== FALSE) {
-//				$flags .= 'unsigned ';
-			}
 			 */
-			if (stripos($_st['Extra'], 'auto_increment') !== FALSE) {
+			$def = $_st['dflt_value'];
+			$flags = '';
+			if ($def == '"NULL"') {
+				$null = true;
+				$flags .= 'null ';
+			} else {
+				$null = false;
+				$flags .= 'not_null ';
+			}
+
+			if ($_st['pk'] == 1) {
 				$flags .= 'auto_increment ';
 			}
 
@@ -83,145 +84,127 @@ class Metrodb_Schemasqlite3 {
 		return ['table'=>$tableName, 'fields'=>$returnFields, 'indexes'=>[$indexList]];
 	}
 
-	public function getDynamicAlterSql($conn, $cols, $dataitem) {
+	public function getDynamicAlterSql($conn, $cols, $tableName) {
 		$qc         = $conn->qc;
 		$sqlDefs    = array();
-		$finalTypes = array();
-		$colNames   = array();
+		$finalTypes = $cols;
 
-		foreach ($cols as $_col) {
-			$colNames[] = $_col['name'];
-		}
 
-		$finalTypes = array();
-		$vars = get_object_vars($dataitem);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
-			if (in_array($k, $colNames)) {
-				//we don't need to alter existing columsn
-				continue;
-			}
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				$finalTypes[$k] = "string";
-			}
-		}
+		$tableName = $qc.$tableName.$qc;
+		foreach($finalTypes as $_col) {
+			$propName = $_col['name'];
+			$type     = $_col['type'];
+			if ($type == 'int') { $type = 'INTEGER'; }
 
-		$tableName = $qc.$dataitem->_table.$qc;
-		/**
-		 * build SQL
-		 */
-		foreach($finalTypes as $propName=>$type) {
-			$propName  = $qc.$propName.$qc;
-			switch($type) {
-			case "email":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName VARCHAR(255)  NULL DEFAULT NULL; \n";
-				break;
-			case "ts":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
-				break;
-			case "int":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
-				break;
-			case "text":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName longtext NULL; \n";
-				break;
-			case "lob":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName longblob NULL; \n";
-				break;
-			case "date":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName datetime NULL DEFAULT NULL; \n";
-				break;
-			default:
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName VARCHAR(255) NULL DEFAULT NULL; \n";
-				break;
-
-			}
+			$colName  = $qc.$_col['name'].$qc;
+			$sqlDefs[] = sprintf(" ALTER TABLE %s ADD COLUMN %s %s%s %s %s %s", 
+				$tableName,
+				$propName,
+				$type,
+				//$_col['len'] ? "(".$_col['len'].")":"",
+				@$_col['len'] ? "":"",
+				//@$_col['us']  ? 'unsigned':'',
+				@$_col['us'] == 1 ? '':'',
+				@$_col['pk'] == 1 ? 'PRIMARY KEY AUTOINCREMENT':'',
+				$_col['null'] === TRUE ? 'NULL': 'NOT NULL',
+				$_col['def']  !== NULL ? 'DEFAULT '.$_col['def']: ''
+			);
 		}
 
 		if ($conn->collation != '') {
-			$sqlDefs[] = "\n\nALTER TABLE $tableName ".$conn->collation.";";
+			$sqlDefs[] = "ALTER TABLE $tableName ".$conn->collation;
 		}
 
 		return $sqlDefs;
 	}
 
+	public function sqlDefForType($name, $type) {
 
-	public function getDynamicCreateSql($conn, $dataitem) {
-		$sql = "";
-		$finalTypes = array('created_on'=>'ts', 'updated_on'=>'ts');
+		$field = array(
+			'name' => $name,
+			'type' => '',
+			'len'  => '',
+			'us'   => 0,
+			'pk'   => 0,
+			'def'  => '',
+			'null' => TRUE);
 
-		$vars = get_object_vars($dataitem);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
-
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				//only override created_on and update_on explicitly
-				if (!isset($finalTypes[$k])) {
-					$finalTypes[$k] = "string";
-				}
-			}
-		}
-
-		$qc = $conn->qc;
-		$tableName = $qc.$dataitem->_table.$qc;
-		/**
-		 * build SQL
-		 */
-		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
-
-		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $finalTypes)) {
-			$sqlDefs[$dataitem->_pkey] = $qc.$dataitem->_pkey.$qc." INTEGER PRIMARY KEY AUTOINCREMENT";
-		}
-
-		foreach($finalTypes as $propName=>$type) {
-			$colName = $qc.$propName.$qc;
-			switch($type) {
+		switch($type) {
 			case "email":
-				$sqlDefs[$propName] = "$colName varchar(255)";
+				$field['type'] = 'varchar';
+				$field['len']  = '255';
 				break;
 			case "ts":
-				$sqlDefs[$propName] = "$colName int(11) NULL DEFAULT NULL";
+				$field['type']  = 'int';
+				$field['len']   = '11';
+				$field['def']   = 'NULL';
+				$field['us']    = 1;
 				break;
 			case "int":
-				$sqlDefs[$propName] = "$colName int(11) NULL";
+				$field['type']  = 'int';
+				$field['len']   = '11';
+				$field['def']   = 'NULL';
+				$field['us']    = 1;
 				break;
 			case "text":
-				$sqlDefs[$propName] = "$colName longtext NULL";
+				$field['type']  = 'longtext';
+				$field['def']   = 'NULL';
 				break;
 			case "lob":
-				$sqlDefs[$propName] = "$colName longblob NULL";
+				$field['type']  = 'longblob';
+				$field['def']   = 'NULL';
 				break;
 			case "date":
-				$sqlDefs[$propName] = "$colName datetime NULL";
+				$field['type']  = 'datetime';
+				$field['def']   = 'NULL';
 				break;
 			default:
-				$sqlDefs[$propName] = "$colName varchar(255)";
+				$field['type']  = 'varchar';
+				$field['len']   = '255';
 				break;
-
+		}
+		if ($field['def'] === '') {
+			if ($field['null']) {
+				$field['def'] = 'NULL';
+			} else {
+				$field['def'] = '\'\'';
 			}
 		}
+		return $field;
+	}
 
+
+	public function getDynamicCreateSql($conn, $tableDef) {
+		$sql = "";
+		$finalTypes = [];
+
+		$tableDef['fields'][] = $this->sqlDefForType('created_on', 'ts');
+		$tableDef['fields'][] = $this->sqlDefForType('updated_on', 'ts');
+		//array('created_on'=>'ts', 'updated_on'=>'ts');
+		$finalTypes = array_merge($finalTypes, $tableDef['fields']);
+
+		$qc = $conn->qc;
+
+		foreach($finalTypes as $_col) {
+			$propName = $_col['name'];
+			$type     = $_col['type'];
+			if ($type == 'int') { $type = 'INTEGER'; }
+
+			$colName  = $qc.$_col['name'].$qc;
+			//$sqlDefs[$propName] = "$colName $type(".$_col['len'].") ".$_col['flags']." ".$col['NULL']." " .$_col['default']."";
+			$sqlDefs[$propName] = sprintf("%s %s%s %s %s %s", 
+				$colName,
+				$type,
+				@$_col['len'] ? "":"",
+				@$_col['us']  ? '':'',
+				@$_col['pk']  ? 'PRIMARY KEY AUTOINCREMENT':'',
+				$_col['null'] === TRUE ? 'NULL': 'NOT NULL',
+				$_col['def']  !== NULL ? 'DEFAULT '.$_col['def']: ''
+			);
+		}
+
+		$tableName = $qc.$tableDef['table'].$qc;
+		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
 		$sql .= implode(",\n",$sqlDefs);
 		$sql .= "\n) ". $conn->tableOpts.";";
 
@@ -232,10 +215,12 @@ class Metrodb_Schemasqlite3 {
 		}
 
 		//create unique key on multiple columns
+		/*
 		if ( count($dataitem->_uniqs ) ) {
 			$sqlStmt[] = "CREATE UNIQUE INDEX ".$qc."unique_idx".$qc." ON ".$tableName." (".implode(',', $dataitem->_uniqs).") ";
 		}
 
+		 */
 		return $sqlStmt;
 	}
 

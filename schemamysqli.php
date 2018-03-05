@@ -82,67 +82,38 @@ class Metrodb_Schemamysqli {
 		return ['table'=>$tableName, 'fields'=>$returnFields, 'indexes'=>[$indexList]];
 	}
 
-	public function getDynamicCreateSql($conn, $dataitem) {
-		$qc  = $conn->qc;
+	public function getDynamicCreateSql($conn, $tableDef) {
 		$sql = "";
-		//$props = $dataitem->__get_props();
-		$finalTypes = array('created_on'=>'ts', 'updated_on'=>'ts');
+		$finalTypes = [];
 
-		$vars   = get_object_vars($dataitem);
-		$keys   = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
+		$tableDef['fields'][] = $this->sqlDefForType('created_on', 'ts');
+		$tableDef['fields'][] = $this->sqlDefForType('updated_on', 'ts');
+		//array('created_on'=>'ts', 'updated_on'=>'ts');
+		$finalTypes = array_merge($finalTypes, $tableDef['fields']);
 
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				//only override created_on and update_on explicitly
-				if (!isset($finalTypes[$k])) {
-					$finalTypes[$k] = "string";
-				}
-			}
+
+		$qc  = $conn->qc;
+
+		foreach($finalTypes as $_col) {
+			$propName = $_col['name'];
+			$type     = $_col['type'];
+			if ($type == 'int') { $type = 'INTEGER'; }
+
+			$colName  = $qc.$_col['name'].$qc;
+			//$sqlDefs[$propName] = "$colName $type(".$_col['len'].") ".$_col['flags']." ".$col['NULL']." " .$_col['default']."";
+			$sqlDefs[$propName] = sprintf("%s %s%s %s %s %s", 
+				$colName,
+				$type,
+				@$_col['len'] ? "(".$_col['len'].")":"",
+				@$_col['us']  ? 'unsigned':'',
+				@$_col['pk']  ? 'PRIMARY KEY AUTO_INCREMENT':'',
+				$_col['null'] === TRUE ? 'NULL': 'NOT NULL',
+				$_col['def']  !== NULL ? 'DEFAULT '.$_col['def']: ''
+			);
 		}
 
-		$tableName = $qc.$dataitem->_table.$qc;
-		// build SQL
+		$tableName = $qc.$tableDef['table'].$qc;
 		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
-
-		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $finalTypes)) {
-			$sqlDefs[$dataitem->_pkey] = $qc.$dataitem->_pkey.$qc." int(11) auto_increment  primary key";
-		}
-
-		foreach($finalTypes as $propName=>$type) {
-			$colName = $qc.$propName.$qc;
-			switch($type) {
-			case "email":
-				$sqlDefs[$propName] = "$colName varchar(255)";
-				break;
-			case "ts":
-				$sqlDefs[$propName] = "$colName int(11) NULL DEFAULT NULL";
-				break;
-			case "int":
-				$sqlDefs[$propName] = "$colName int(11) NULL";
-				break;
-			case "text":
-				$sqlDefs[$propName] = "$colName longtext NULL";
-				break;
-			case "lob":
-				$sqlDefs[$propName] = "$colName longblob NULL";
-				break;
-			case "date":
-				$sqlDefs[$propName] = "$colName datetime NULL";
-				break;
-			default:
-				$sqlDefs[$propName] = "$colName varchar(255)";
-				break;
-
-			}
-		}
-
 		$sql .= implode(",\n",$sqlDefs);
 		$sql .= "\n) ". $conn->tableOpts.";";
 
@@ -153,9 +124,11 @@ class Metrodb_Schemamysqli {
 		}
 
 		//create unique key on multiple columns
+		/*
 		if ( @count($dataitem->_uniqs ) ) {
 			$sqlStmt[] = "ALTER TABLE ".$tableName." ADD UNIQUE INDEX ".$qc."unique_idx".$qc." (".implode(',', $dataitem->_uniqs).") ";
 		}
+		*/
 		return $sqlStmt;
 	}
 
@@ -233,5 +206,60 @@ class Metrodb_Schemamysqli {
 		}
 
 		return $sqlDefs;
+	}
+
+	public function sqlDefForType($name, $type) {
+
+		$field = array(
+			'name' => $name,
+			'type' => '',
+			'len'  => '',
+			'us'   => 0,
+			'pk'   => 0,
+			'def'  => '',
+			'null' => TRUE);
+
+		switch($type) {
+			case "email":
+				$field['type'] = 'varchar';
+				$field['len']  = '255';
+				break;
+			case "ts":
+				$field['type']  = 'int';
+				$field['len']   = '11';
+				$field['def']   = 'NULL';
+				$field['us']    = 1;
+				break;
+			case "int":
+				$field['type']  = 'int';
+				$field['len']   = '11';
+				$field['def']   = 'NULL';
+				$field['us']    = 1;
+				break;
+			case "text":
+				$field['type']  = 'longtext';
+				$field['def']   = 'NULL';
+				break;
+			case "lob":
+				$field['type']  = 'longblob';
+				$field['def']   = 'NULL';
+				break;
+			case "date":
+				$field['type']  = 'datetime';
+				$field['def']   = 'NULL';
+				break;
+			default:
+				$field['type']  = 'varchar';
+				$field['len']   = '255';
+				break;
+		}
+		if ($field['def'] === '') {
+			if ($field['null']) {
+				$field['def'] = 'NULL';
+			} else {
+				$field['def'] = '\'\'';
+			}
+		}
+		return $field;
 	}
 }
