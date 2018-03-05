@@ -184,7 +184,7 @@ class Metrodb_Connector {
 		//make sure the driver is loaded
 		$driverName = $_dsn['scheme'];
 		$driver = self::loadDriver($driverName);
-		$driver->host = $_dsn['host'];
+		$driver->host = @$_dsn['host'];
 		$driver->database = substr($_dsn['path'],1);
 		$driver->user = @$_dsn['user'];
 		$driver->password = @$_dsn['pass'];
