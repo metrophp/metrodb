@@ -268,7 +268,8 @@ class Metrodb_Sqlite3 extends Metrodb_Connector {
 
 	public function truncate($tbl) {
 		$qc = $this->qc;
-		return $this->exec("DELETE FROM ".$qc.$tbl.$qc);
+		return $this->exec("DELETE FROM ".$qc.$tbl.$qc) &&
+		       $this->exec('DELETE FROM "SQLITE_SEQUENCE" WHERE name='.$qc.$tbl.$qc);
 	}
 
 	public function getTables() {
