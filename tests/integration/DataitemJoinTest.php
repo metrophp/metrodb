@@ -112,11 +112,13 @@ class Metrodb_Tests_Integration_Dataitem_Join extends PHPUnit_Framework_TestCase
 		/////////////////////
 
 		$finder = new Metrodb_Dataitem('parent');
-		$finder->_cols[] = 'T1.title';
-		$finder->_cols[] = 'T0.child_id';
+		$finder->_cols[] = 'child.title';
+		$finder->_cols[] = 'child.child_id';
 		$finder->hasManyToMany('child');
+		$finder->hasManyToMany('child', 'M2MTest');
 		$finder->andWhere('parent.parent_id', 1);
-		//$finder->echoSelect();
+		$finder->andWhere('M2MTest.child_id', [2,1], 'IN');
+//		$finder->echoSelect();
 		$result = $finder->findAsArray();
 
 		$this->assertEquals(2, count($result));
