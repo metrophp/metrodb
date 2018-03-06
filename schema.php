@@ -81,6 +81,17 @@ class Metrodb_Schema {
 		return $fieldList;
 	}
 
+	/**
+	 * @TODO: dataitems don't specify indexes yet
+	 */
+	public function getMissingIndexes($tableDef, $dataitem) {
+		return [];
+	}
+
+	public function getMissingUniques($tableDef, $dataitem) {
+		return [];
+	}
+
 	public function makeTableDef($dataitem) {
 
 		$tableName = $dataitem->_table;
@@ -115,15 +126,50 @@ class Metrodb_Schema {
 			}
 			$fieldList[] = $this->schemaDriver->sqlDefForType($k, $type);
 		}
+		if ( @count($dataitem->_uniqs ) ) {
+			$indexList[] = [
+				'name'=>'unique_idx',
+				'type'=>'unique',
+				'cols'=>$dataitem->_uniqs
+			];
+		}
 
-		return ['table'=>$tableName, 'fields'=>$fieldList, 'indexes'=>[$indexList]];
+		return ['table'=>$tableName, 'fields'=>$fieldList, 'indexes'=>$indexList];
 	}
+
+	/**
+	 * @return array list of table defs for many to many joins
+	 */
+	public function makeJoinTableDef($dataitem) {
+
+		$tableList = [];
+		if (!@count($dataitem->_relatedMany)) {
+			return $tableList;
+		}
+
+		foreach ($dataitem->_relatedMany as $rel) {
+			$tableName    = $rel['jtable'];
+			$fieldList    = [];
+			$indexList    = [];
+
+			$fieldList[] = $this->schemaDriver->sqlDefForType($rel['fk'], 'int');
+			$fieldList[] = $this->schemaDriver->sqlDefForType($rel['lk'], 'int');
+
+			$tableList[] = ['table'=>$tableName, 'fields'=>$fieldList, 'indexes'=>$indexList];
+		}
+
+		return $tableList;
+	}
+
 
 	/**
 	 * Create a number of SQL statements which will
 	 * update the existing table to the required spec.
 	 */
-	public function dynamicAlterSql($cols, $dataitem) {
+	public function dynamicAlterSql($tableDef, $dataitem) {
+		$cols = $this->getMissingColumns($tableDef, $dataitem);
+		$idx  = $this->getMissingIndexes($tableDef, $dataitem);
+		$unq  = $this->getMissingUniques($tableDef, $dataitem);
 		return $this->schemaDriver->getDynamicAlterSql($this->conn, $cols, $dataitem->_table);
 	}
 
@@ -132,7 +178,10 @@ class Metrodb_Schema {
 	 * create a new table
 	 */
 	public function dynamicCreateSql($dataitem) {
-		$tableDef = $this->makeTableDef($dataitem);
-		return $this->schemaDriver->getDynamicCreateSql($this->conn, $tableDef);
+		$tableList = [$this->makeTableDef($dataitem)];
+		$tableList += $this->makeJoinTableDef($dataitem);
+		foreach ($tableList as $tableDef) {
+			return $this->schemaDriver->getDynamicCreateSql($this->conn, $tableDef);
+		}
 	}
 }

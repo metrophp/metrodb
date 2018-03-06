@@ -24,6 +24,9 @@ trait Metrodb_Modeltrait {
 		return \_makeNew('dataitem', $this->tableName);
 	}
 
+	public function decorateRelations() {
+	}
+
 	/**
 	 *
 	 */

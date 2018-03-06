@@ -84,7 +84,7 @@ class Metrodb_Schemasqlite3 {
 		return ['table'=>$tableName, 'fields'=>$returnFields, 'indexes'=>[$indexList]];
 	}
 
-	public function getDynamicAlterSql($conn, $cols, $tableName) {
+	public function getDynamicAlterSql($conn, $cols, $tableName, $indexList=[], $uniqueList=[]) {
 		$qc         = $conn->qc;
 		$sqlDefs    = array();
 		$finalTypes = $cols;
@@ -113,6 +113,11 @@ class Metrodb_Schemasqlite3 {
 
 		if ($conn->collation != '') {
 			$sqlDefs[] = "ALTER TABLE $tableName ".$conn->collation;
+		}
+
+		foreach ($uniqueList as $_index) {
+			if (!@count($_index['cols'])) { continue; }
+			$sqlStmt[] = "CREATE UNIQUE INDEX ".$qc.$_index['name'].$qc." ON ".$tableName."(".implode(',', $_index['cols']).") ";
 		}
 
 		return $sqlDefs;
@@ -214,13 +219,12 @@ class Metrodb_Schemasqlite3 {
 			$sqlStmt = array($sql);
 		}
 
-		//create unique key on multiple columns
-		/*
-		if ( count($dataitem->_uniqs ) ) {
-			$sqlStmt[] = "CREATE UNIQUE INDEX ".$qc."unique_idx".$qc." ON ".$tableName." (".implode(',', $dataitem->_uniqs).") ";
-		}
+		foreach ($tableDef['indexes'] as $_index) {
+			if (!@count($_index['cols'])) { continue; }
+			$unq = $_index['type'] == 'unique'?'UNIQUE':'';
 
-		 */
+			$sqlStmt[] = "CREATE ".$unq." INDEX ".$qc.$_index['name'].$qc." ON ".$tableName."(".implode(',', $_index['cols']).") ";
+		}
 		return $sqlStmt;
 	}
 

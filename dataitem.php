@@ -891,12 +891,12 @@ class Metrodb_Dataitem {
 	 */
 	public function dynamicReload($db, $whereQ = '') {
 
-		$schema = $db->getSchema();
-		$cols   = $schema->getTableColumns($this->_table);
-		if (!$cols) {
+		$schema   = $db->getSchema();
+		$tableDef = $schema->getTable($this->_table);
+		if (!$tableDef) {
 			$sqlDefs = $schema->dynamicCreateSql($this);
 		} else {
-			$sqlDefs = $schema->dynamicAlterSql($cols, $this);
+			$sqlDefs = $schema->dynamicAlterSql($tableDef, $this);
 		}
 		foreach ($sqlDefs as $sql) {
 			$db->query($sql);
@@ -914,11 +914,11 @@ class Metrodb_Dataitem {
 	public function dynamicResave($db, $doUpdate=FALSE) {
 
 		$schema = $db->getSchema();
-		$cols   = $schema->getTableColumns($this->_table);
-		if (!$cols) {
+		$tableDef = $schema->getTable($this->_table);
+		if (!$tableDef) {
 			$sqlDefs = $schema->dynamicCreateSql($this);
 		} else {
-			$sqlDefs = $schema->dynamicAlterSql($cols, $this);
+			$sqlDefs = $schema->dynamicAlterSql($tableDef, $this);
 		}
 		foreach ($sqlDefs as $sql) {
 			$db->query($sql);

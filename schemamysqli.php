@@ -123,6 +123,9 @@ class Metrodb_Schemamysqli {
 			$sqlStmt = array($sql);
 		}
 
+		foreach ($tableDef['indexes'] as $_index) {
+			$sqlStmt[] = "ALTER TABLE ".$tableName." ADD UNIQUE INDEX ".$qc."unique_idx".$qc." (".implode(',', $_index['cols']).") ";
+		}
 		//create unique key on multiple columns
 		/*
 		if ( @count($dataitem->_uniqs ) ) {
@@ -133,7 +136,7 @@ class Metrodb_Schemamysqli {
 	}
 
 
- 	public function getDynamicAlterSql($conn, $cols, $dataitem) {
+	public function getDynamicAlterSql($conn, $cols, $dataitem, $indexList=[], $uniqueList=[]) {
 		$qc         = $conn->qc;
 		$sqlDefs    = array();
 		$finalTypes = array();
@@ -202,7 +205,13 @@ class Metrodb_Schemamysqli {
 		}
 
 		if ($conn->collation != '') {
-			$sqlDefs[] = "\n\nALTER TABLE $tableName ".$conn->collation.";";
+			$sqlDefs[] = "ALTER TABLE $tableName ".$conn->collation.";";
+		}
+
+		foreach ($uniqueList as $_index) {
+			if (!@count($_index['cols'])) { continue; }
+
+			$sqlStmt[] = "ALTER TABLE ".$tableName." ADD UNIQUE INDEX ".$qc.$_index['name'].$qc." (".implode(',', $dataitem->_uniqs).") ";
 		}
 
 		return $sqlDefs;
