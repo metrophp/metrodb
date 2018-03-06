@@ -138,11 +138,11 @@ class Metrodb_Dataitem {
 	 *
 	 * @return mixed  value of data item's property
 	 */
-	public function get($key) {
+	public function get($key, $default=NULL) {
 		if(isset($this->{$key})) {
 			return $this->{$key};
 		} else {
-			return NULL;
+			return $default;
 		}
 	}
 
