@@ -242,14 +242,8 @@ class Metrodb_Dataitem {
 
 		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
 			$err = $db->errorMessage;
-//			$errObj = Metrofw_ErrorStack::pullError();
+
 			if (!$this->dynamicReload($db, $whereQ)) {
-				//pulling the db error hides the specifics of the SQL
-/*				if (Metrofw_ErrorStack::pullError()) {
-					Metrofw_ErrorStack::throwError("Cannot load data item.\n".
-						$err, E_USER_WARNING);
-				}
- */
 				return false;
 			}
 		}
@@ -367,16 +361,10 @@ class Metrodb_Dataitem {
 		} else if (strlen($where) ) {
 			$whereQ = $this->_pkey .' = '.$where;
 		 */
+
 		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
 			$err = $db->errorMessage;
-//			$errObj = Metrofw_ErrorStack::pullError();
 			if (!$this->dynamicReload($db, $whereQ)) {
-				//pulling the db error hides the specifics of the SQL
-/*				if (Metrofw_ErrorStack::pullError()) {
-					Metrofw_ErrorStack::throwError("Cannot load data item.\n".
-						$err, E_USER_WARNING);
-				}
- */
 				return array();
 			}
 		}
@@ -608,7 +596,7 @@ class Metrodb_Dataitem {
 			//$sql .= $atom .' LIMIT 1';
 			$sql .= $atom;
 		} else {
-			$sql .= ' WHERE '.$this->_pkey .' = \''.$this->{$this->_pkey}.'\'';//.' LIMIT 1';
+			$sql .= ' WHERE '.$this->_pkey .' = \''.$this->{$this->_pkey}.'\'';
 		}
 
 		return $sql;
@@ -625,7 +613,24 @@ class Metrodb_Dataitem {
 			$sql .= PHP_EOL.'  LEFT JOIN "'.$tbl.'" AS '.$als.
                     PHP_EOL.'    ON "'.$ltable.'"."'.$lk.'" = "'.$als.'"."'.$fk.'" ';
 		}
-		return $sql;
+		//we can't join a non-aliased table more than once
+		//without error, and it's not necessary if the first
+		//join is not in the where clause.
+		//but we might want to join the last relationship many
+		//times with some a priori key
+		$nonAliasedTableList = [];
+		foreach ($this->_relatedMany as $_idx => $rel) {
+			extract($rel);
+			if (!in_array($jtable, $nonAliasedTableList)) {
+				$sql .= PHP_EOL.'  LEFT JOIN "'.$jtable.'" '.
+						PHP_EOL.'    ON "'.$ltable.'"."'.$lk.'" = "'.$jtable.'"."'.$lk.'" ';
+				$nonAliasedTableList[] = $jtable;
+			}
+			$sql .= PHP_EOL.'  LEFT JOIN "'.$ftable.'" AS '.$falias.
+                    PHP_EOL.'    ON "'.$jtable.'"."'.$fk.'" = "'.$falias.'"."'.$fk.'" ';
+		}
+
+		return $sql.PHP_EOL;
 	}
 
 	/**
@@ -795,23 +800,13 @@ class Metrodb_Dataitem {
 		if ($tableFk  == '') { $tableFk  = $table.'_id';}
 		if ($tableJ   == '') { $tableJ   = $this->_table. '_'.$table.'_link';}
 
-		$aliasJ = 'T'.count($this->_relatedSingle);
-		$this->_relatedSingle[] = array(
-			'ftable'=>$tableJ,
+		if ($alias == '') { $alias = $table; }
+		$this->_relatedMany[] = array(
 			'ltable'=>$this->_table,
 			'lk'=>$this->_pkey,
-			'falias'=>$aliasJ,
-			'fk'=>$tableJLk
-		);
-
-		if ($alias == '') { $alias = 'T'.count($this->_relatedSingle);}
-		//left join  ftable
-		// on  ltable.lk = falias.fk
-		$this->_relatedSingle[] = array(
-			'ftable'=>$table,
-			'ltable'=>$aliasJ,
-			'lk'=>$tableJFk,
+			'jtable'=>$tableJ,
 			'falias'=>$alias,
+			'ftable'=>$table,
 			'fk'=>$tableFk
 		);
 	}
