@@ -122,7 +122,7 @@ class Metrodb_Connector {
 			$dsn = Metrodb_Connector::dsnForTable($table);
 		}
 
-		$connList = Metrodb_Connector::$connList;
+		$connList =& Metrodb_Connector::$connList;
 		// if a connection has already been made and in the handles array
 		// get it out
 
