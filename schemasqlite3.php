@@ -15,10 +15,29 @@ class Metrodb_Schemasqlite3 {
 		$conn->query("SELECT * FROM  sqlite_master where type='index' and tbl_name='$tableName'");
 		$_idx = [];
 		while ($conn->nextRecord()) {
-			++$seq_in_idx;
 			extract($conn->record);
-			$_idx[$name][$seq_in_idx]['column']     = $name;
-			$_idx[$Key_name][$seq_in_idx]['unique'] = $name;
+
+			if (! array_key_exists($name, $_idx)) {
+				$_idx[$name] = ['column'=>[], 'unique'=>false];
+			}
+			$matches = [];
+			//the 'sql' key holds the entire sql to recreate the 
+			//index, so the colums will be at the end inside
+			//parentesis
+			$cnt = preg_match( '/.*\((.*)\)/', $sql, $matches);
+			if ($matches[1]) {
+				$cols = explode(', ', $matches[1]);
+				$cols = array_map(function($val) {
+					return str_replace('"', '', $val);
+				}, $cols);
+				$_idx[$name]['column'] = $cols;
+			}
+
+			if (stristr('unique ', $sql)) {
+				$_idx[$name]['unique'] = true;
+			} else {
+				$_idx[$name]['unique'] = false;
+			}
 		}
 		return $_idx;
 	}
@@ -81,7 +100,7 @@ class Metrodb_Schemasqlite3 {
 		}
 
 		$indexList = $this->_getTableIndexes($conn, $tableName);
-		return ['table'=>$tableName, 'fields'=>$returnFields, 'indexes'=>[$indexList]];
+		return ['table'=>$tableName, 'fields'=>$returnFields, 'indexes'=>$indexList];
 	}
 
 	public function getDynamicAlterSql($conn, $cols, $tableName, $indexList=[], $uniqueList=[]) {

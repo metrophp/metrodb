@@ -20,8 +20,11 @@ class Metrodb_Schemamysqli {
 		$_idx = [];
 		while ($conn->nextRecord()) {
 			extract($conn->record);
-			$_idx[$Key_name][$Seq_in_index]['column'] = $Column_name;
-			$_idx[$Key_name][$Seq_in_index]['unique'] = $Non_unique;
+			if (! array_key_exists($Key_name, $_idx)) {
+				$_idx[$Key_name] = ['column'=>[], 'unique'=>false];
+			}
+			$_idx[$Key_name]['column'][] = $Column_name;
+			$_idx[$Key_name]['unique'] = $Non_unique == '1'? FALSE:TRUE;
 		}
 		return $_idx;
 	}
@@ -79,7 +82,7 @@ class Metrodb_Schemamysqli {
 		}
 
 		$indexList = $this->_getTableIndexes($conn, $tableName);
-		return ['table'=>$tableName, 'fields'=>$returnFields, 'indexes'=>[$indexList]];
+		return ['table'=>$tableName, 'fields'=>$returnFields, 'indexes'=>$indexList];
 	}
 
 	public function getDynamicCreateSql($conn, $tableDef) {
