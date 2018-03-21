@@ -161,6 +161,30 @@ class Metrodb_Schema {
 		return $tableList;
 	}
 
+	/**
+	 * @return array list of ephemeral dataitems that represent join tables
+	 */
+	public function makeJoinDataItem($dataitem) {
+
+		$diList = [];
+		if (!@count($dataitem->_relatedMany)) {
+			return $diList;
+		}
+
+		foreach ($dataitem->_relatedMany as $rel) {
+			$di = \_makeNew('dataitem', $rel['jtable']);
+			$di->_typeMap[ $rel['fk'] ] = 'int';
+			$di->_typeMap[ $rel['lk'] ] = 'int';
+
+			$di->{ $rel['fk'] } = 0;
+			$di->{ $rel['lk'] } = 0;
+			$diList[] = $di;
+		}
+
+		return $diList;
+	}
+
+
 
 	/**
 	 * Create a number of SQL statements which will
@@ -170,7 +194,20 @@ class Metrodb_Schema {
 		$cols = $this->getMissingColumns($tableDef, $dataitem);
 		$idx  = $this->getMissingIndexes($tableDef, $dataitem);
 		$unq  = $this->getMissingUniques($tableDef, $dataitem);
-		return $this->schemaDriver->getDynamicAlterSql($this->conn, $cols, $dataitem->_table);
+		$sqlDefs   = [];
+		$sqlDefs   = array_merge($sqlDefs, $this->schemaDriver->getDynamicAlterSql($this->conn, $cols, $dataitem->_table));
+
+		$diList = $this->makeJoinDataItem($dataitem);
+		foreach ($diList as $_di) {
+			//only make new relations
+			$_table = $this->getTable($_di->_table);
+			if (!$_table) {
+				$_tableDef = $this->makeTableDef($_di);
+				$sqlDefs = array_merge($sqlDefs,$this->schemaDriver->getDynamicCreateSql($this->conn, $_tableDef));
+			}
+		}
+		return $sqlDefs;
+
 	}
 
 	/**
@@ -178,10 +215,17 @@ class Metrodb_Schema {
 	 * create a new table
 	 */
 	public function dynamicCreateSql($dataitem) {
-		$tableList = [$this->makeTableDef($dataitem)];
-		$tableList += $this->makeJoinTableDef($dataitem);
+		$tableList[] = $this->makeTableDef($dataitem);
+//		$tableList = array_merge($tableList, $this->makeJoinTableDef($dataitem));
+		$sqlDefs   = [];
 		foreach ($tableList as $tableDef) {
-			return $this->schemaDriver->getDynamicCreateSql($this->conn, $tableDef);
+			$sqlDefs = array_merge($sqlDefs,$this->schemaDriver->getDynamicCreateSql($this->conn, $tableDef));
 		}
+		$diList = $this->makeJoinDataItem($dataitem);
+		foreach ($diList as $_di) {
+			$_tableDef = $this->makeTableDef($_di);
+			$sqlDefs = array_merge($sqlDefs,$this->schemaDriver->getDynamicCreateSql($this->conn, $_tableDef));
+		}
+		return $sqlDefs;
 	}
 }
