@@ -3,8 +3,8 @@
 include_once('dataitem.php');
 include_once('connector.php');
 
-$sqliteDsn = 'sqlite3:/:memory:';
-$mysqlDsn  = 'mysqli://root:mysql@localhost/metrodb_test_001?ansiQuotes';
+$sqliteDsn = 'sqlite3:/:memory:?dynamicSchema';
+$mysqlDsn  = 'mysqli://root:mysql@localhost/metrodb_test_001?ansiQuotes&dynamicSchema';
 
 Metrodb_Connector::setDsn('sqlite3', $sqliteDsn);
 Metrodb_Connector::setDsn('default', $sqliteDsn);
