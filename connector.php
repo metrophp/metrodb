@@ -5,9 +5,10 @@
  */
 class Metrodb_Connector {
 
-	public $qc        = '"';
-	public $collation = '';
-	public $tableOpts = '';
+	public $qc            = '"';
+	public $collation     = '';
+	public $tableOpts     = '';
+	public $dynamicSchema = FALSE;
 
 	public function resources($request) {
 		_didef('dataitem',  'metrodb/dataitem.php');
@@ -57,6 +58,10 @@ class Metrodb_Connector {
 			return 'default';
 
 		return @$g_db_handle[$tableName];
+	}
+
+	public function setDynamicSchema() {
+		$this->dynamicSchema = TRUE;
 	}
 
 	/**
@@ -122,7 +127,7 @@ class Metrodb_Connector {
 			$dsn = Metrodb_Connector::dsnForTable($table);
 		}
 
-		$connList = Metrodb_Connector::$connList;
+		$connList =& Metrodb_Connector::$connList;
 		// if a connection has already been made and in the handles array
 		// get it out
 
@@ -443,5 +448,51 @@ class Metrodb_Connector {
 			$val,
 			"\x00\'\"\r\n"
 		).'\'';
+	}
+
+	/**
+	 * Add columns at runtime, or create a missing table.
+	 *
+	 * @param Object $di  the dataitem to use as schema
+	 */
+	public function onLoadError($di) {
+		if (!$this->dynamicSchema) {
+			return false;
+		}
+
+		$schema   = $this->getSchema();
+		$tableDef = $schema->getTable($di->_table);
+		if (!$tableDef) {
+			$sqlDefs = $schema->dynamicCreateSql($di);
+		} else {
+			$sqlDefs = $schema->dynamicAlterSql($tableDef, $di);
+		}
+		foreach ($sqlDefs as $sql) {
+			$this->query($sql);
+		}
+		return true;
+	}
+
+	/**
+	 * Add columns at runtime, or create a missing table.
+	 *
+	 * @param Object $di  the dataitem to use as schema
+	 */
+	public function onSaveError($di) {
+		if (!$this->dynamicSchema) {
+			return false;
+		}
+
+		$schema = $this->getSchema();
+		$tableDef = $schema->getTable($di->_table);
+		if (!$tableDef) {
+			$sqlDefs = $schema->dynamicCreateSql($di);
+		} else {
+			$sqlDefs = $schema->dynamicAlterSql($tableDef, $di);
+		}
+		foreach ($sqlDefs as $sql) {
+			$this->query($sql);
+		}
+		return true;
 	}
 }

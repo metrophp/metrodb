@@ -170,11 +170,12 @@ class Metrodb_Dataitem {
 		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 
 		if ( $this->_isNew ) {
-			if (!$db->query( $this->buildInsert(), FALSE )) {
+			if (!$db->query( $this->buildInsert())) {
 				$err = $db->errorMessage;
-				if (!$this->dynamicResave($db)) {
+				if (!$db->onSaveError($this)) {
 					return FALSE;
 				}
+				$db->query($this->buildInsert());
 			}
 			$this->_isNew = FALSE;
 			if (!isset($this->_pkey) || $this->_pkey === NULL) {
@@ -184,12 +185,13 @@ class Metrodb_Dataitem {
 				$this->{$this->_pkey} = $db->getInsertId();
 			}
 		} else {
-			if (!$db->query( $this->buildUpdate(), FALSE )) {
+			if (!$db->query($this->buildUpdate())) {
 				$err = $db->errorMessage;
 				// TRUE performs buildUpdate instead of buildInsert
-				if (!$this->dynamicResave($db, TRUE)) {
+				if (!$db->onSaveError($this)) {
 					return FALSE;
 				}
+				$db->query($this->buildUpdate());
 			}
 			$this->_isNew = FALSE;
 			if (!isset($this->_pkey) || $this->_pkey === NULL) {
@@ -240,12 +242,11 @@ class Metrodb_Dataitem {
 			$whereQ .= $atom;
 		}
 
-		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
-			$err = $db->errorMessage;
-
-			if (!$this->dynamicReload($db, $whereQ)) {
+		if (!$db->query($this->buildSelect($whereQ))) {
+			if (!$db->onLoadError($this)) {
 				return false;
 			}
+			$db->query($this->buildSelect($whereQ));
 		}
 
 		if(!$db->nextRecord()) {
@@ -307,11 +308,11 @@ class Metrodb_Dataitem {
 		} else if (strlen($where) ) {
 			$whereQ = $this->_pkey .' = '.$where;
 		 */
-		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
-			$err = $db->errorMessage;
-			if (!$this->dynamicReload($db, $whereQ)) {
+		if (!$db->query($this->buildSelect($whereQ))) {
+			if (!$db->onLoadError($this)) {
 				return array();
 			}
+			$db->query($this->buildSelect($whereQ));
 		}
 
 
@@ -362,13 +363,12 @@ class Metrodb_Dataitem {
 			$whereQ = $this->_pkey .' = '.$where;
 		 */
 
-		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
-			$err = $db->errorMessage;
-			if (!$this->dynamicReload($db, $whereQ)) {
+		if (!$db->query($this->buildSelect($whereQ))) {
+			if (!$db->onLoadError($this)) {
 				return array();
 			}
+			$db->query($this->buildSelect($whereQ));
 		}
-
 
 		$recs = array();
 
@@ -883,50 +883,4 @@ class Metrodb_Dataitem {
 		echo "</pre>\n";
 	}
 
-	/**
-	 * Add columns at runtime, or create a missing table.
-	 *
-	 * @param Object $db  the db connection handle to use
-	 * @param bool  $doUpdate whenter or not to call $this->buildInsert() or buildUpdate()
-	 */
-	public function dynamicReload($db, $whereQ = '') {
-
-		$schema   = $db->getSchema();
-		$tableDef = $schema->getTable($this->_table);
-		if (!$tableDef) {
-			$sqlDefs = $schema->dynamicCreateSql($this);
-		} else {
-			$sqlDefs = $schema->dynamicAlterSql($tableDef, $this);
-		}
-		foreach ($sqlDefs as $sql) {
-			$db->query($sql);
-		}
-
-		return $db->query($this->buildSelect($whereQ));
-	}
-
-	/**
-	 * Add columns at runtime, or create a missing table.
-	 *
-	 * @param Object $db  the db connection handle to use
-	 * @param bool  $doUpdate whenter or not to call $this->buildInsert() or buildUpdate()
-	 */
-	public function dynamicResave($db, $doUpdate=FALSE) {
-
-		$schema = $db->getSchema();
-		$tableDef = $schema->getTable($this->_table);
-		if (!$tableDef) {
-			$sqlDefs = $schema->dynamicCreateSql($this);
-		} else {
-			$sqlDefs = $schema->dynamicAlterSql($tableDef, $this);
-		}
-		foreach ($sqlDefs as $sql) {
-			$db->query($sql);
-		}
-
-		if ($doUpdate) {
-			return $db->query($this->buildUpdate());
-		}
-		return $db->query($this->buildInsert());
-	}
 }
