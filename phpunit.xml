@@ -16,6 +16,9 @@
 	</testsuites>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
+			<file>./schema.php</file>
+			<file>./schemamysqli.php</file>
+			<file>./schemasqlite3.php</file>
 			<file>./connector.php</file>
 			<file>./dataitem.php</file>
 			<file>./modeltrait.php</file>
