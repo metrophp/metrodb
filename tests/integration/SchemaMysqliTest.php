@@ -10,7 +10,7 @@ class Metrodb_Tests_Integration_SchemaMysqli extends PHPUnit_Framework_TestCase 
 		$db = Metrodb_Connector::getHandle('mysqli');
 		if (strpos(strtolower(get_class($db)),'mysql') == FALSE) {
 			$this->markTestSkipped(
-				'The the default db driver is not Mysqli.'
+				'The the msyqli db driver is not defined or is not Mysqli.'
 			);
 			return;
 		}

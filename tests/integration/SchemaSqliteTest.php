@@ -10,7 +10,7 @@ class Metrodb_Tests_Integration_SchemaSqlite extends PHPUnit_Framework_TestCase 
 		$db = Metrodb_Connector::getHandle('sqlite3');
 		if (strpos(strtolower(get_class($db)), 'sqlite') == FALSE) {
 			$this->markTestSkipped(
-				'The the default db driver is not Sqlite3.'
+				'The the sqlite db driver is not defined or is not Sqlite3.'
 			);
 			return;
 		}
