@@ -185,29 +185,55 @@ class Metrodb_Schema {
 	}
 
 
-
 	/**
-	 * Create a number of SQL statements which will
-	 * update the existing table to the required spec.
+	 * Return table differences
 	 */
-	public function dynamicAlterSql($tableDef, $dataitem) {
+	public function getDifference($dataitem, $tableDef=NULL) {
+		if ($tableDef == NULL) {
+			return $this->getDifferenceCreate($dataitem);
+		}
+		return $this->getDifferenceAlter($dataitem, $tableDef);
+	}
+	
+	public function getDifferenceAlter($dataitem, $tableDef) {
 		$cols = $this->getMissingColumns($tableDef, $dataitem);
 		$idx  = $this->getMissingIndexes($tableDef, $dataitem);
 		$unq  = $this->getMissingUniques($tableDef, $dataitem);
-		$sqlDefs   = [];
-		$sqlDefs   = array_merge($sqlDefs, $this->schemaDriver->getDynamicAlterSql($this->conn, $cols, $dataitem->_table));
+
+		$tableDefs   = [];
+		if (empty($cols) && empty($idx) && empty($unq)) {
+			return $tableDefs;
+		}
+		$tableDefs[] = ['table'=>$tableDef['table'], 'fields'=>$cols, 'indexes'=>$idx, 'uniques'=>$unq, 'alter'=>true];
 
 		$diList = $this->makeJoinDataItem($dataitem);
 		foreach ($diList as $_di) {
 			//only make new relations
 			$_table = $this->getTable($_di->_table);
 			if (!$_table) {
-				$_tableDef = $this->makeTableDef($_di);
-				$sqlDefs = array_merge($sqlDefs,$this->schemaDriver->getDynamicCreateSql($this->conn, $_tableDef));
+				$tableDefs[] = $this->makeTableDef($_di);
 			}
 		}
-		return $sqlDefs;
+		return $tableDefs;
+	}
 
+	public function getDifferenceCreate($dataitem) {
+		$tableDefs[] = $this->makeTableDef($dataitem);
+		$diList      = $this->makeJoinDataItem($dataitem);
+		foreach ($diList as $_di) {
+			$_tableDef = $this->makeTableDef($_di);
+			$tableDefs[] = $_tableDef;
+		}
+		return $tableDefs;
+
+	}
+
+	/**
+	 * Create a number of SQL statements which will
+	 * update the existing table to the required spec.
+	 */
+	public function dynamicAlterSql($tableDef, $dataitem) {
+		return $this->renderDifference($this->getDifferenceAlter($dataitem, $tableDef));
 	}
 
 	/**
@@ -215,16 +241,29 @@ class Metrodb_Schema {
 	 * create a new table
 	 */
 	public function dynamicCreateSql($dataitem) {
-		$tableList[] = $this->makeTableDef($dataitem);
-//		$tableList = array_merge($tableList, $this->makeJoinTableDef($dataitem));
-		$sqlDefs   = [];
-		foreach ($tableList as $tableDef) {
-			$sqlDefs = array_merge($sqlDefs,$this->schemaDriver->getDynamicCreateSql($this->conn, $tableDef));
+		return $this->renderDifference($this->getDifferenceCreate($dataitem));
+	}
+
+	public function renderDifference($tableDefList, $outputDriver = NULL) {
+		if ($outputDriver == NULL) {
+			$outputDriver = $this->schemaDriver;
 		}
-		$diList = $this->makeJoinDataItem($dataitem);
-		foreach ($diList as $_di) {
-			$_tableDef = $this->makeTableDef($_di);
-			$sqlDefs = array_merge($sqlDefs,$this->schemaDriver->getDynamicCreateSql($this->conn, $_tableDef));
+		$sqlDefs = [];
+		foreach ($tableDefList as $_tableDef) {
+			if (array_key_exists('alter', $_tableDef)) {
+				$sqlDefs = array_merge($sqlDefs, $outputDriver->getDynamicAlterSql(
+					$this->conn,
+					$_tableDef['fields'],
+					$_tableDef['table'],
+					$_tableDef['indexes'],
+					$_tableDef['uniques']
+				));
+			} else {
+				$sqlDefs = array_merge($sqlDefs, $outputDriver->getDynamicCreateSql(
+					$this->conn,
+					$_tableDef
+				));
+			}
 		}
 		return $sqlDefs;
 	}
