@@ -135,72 +135,31 @@ class Metrodb_Schemamysqli {
 	}
 
 
-	public function getDynamicAlterSql($conn, $cols, $dataitem, $indexList=[], $uniqueList=[]) {
+	public function getDynamicAlterSql($conn, $cols, $tableName, $indexList=[], $uniqueList=[]) {
+
 		$qc         = $conn->qc;
 		$sqlDefs    = array();
-		$finalTypes = array();
-		$colNames   = array();
+		$finalTypes = $cols;
 
-		foreach ($cols as $_col) {
-			$colNames[] = $_col['name'];
-		}
+		$tableName = $qc.$tableName.$qc;
+		foreach($finalTypes as $_col) {
 
-		$finalTypes = array();
-		$vars = get_object_vars($dataitem);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
-			if (in_array($k, $colNames)) {
-				//we don't need to alter existing columsn
-				continue;
-			}
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				$finalTypes[$k] = "string";
-			}
-		}
+			$propName = $_col['name'];
+			$type     = $_col['type'];
+			if ($type == 'int') { $type = 'INTEGER'; }
 
-		$tableName = $qc.$dataitem->_table.$qc;
-		/**
-		 * build SQL
-		 */
-		foreach($finalTypes as $propName => $type) {
-			$propName  = $qc.$propName.$qc;
-			switch ($type) {
-				case "email":
-					$sqlDefs[] = "ALTER TABLE $tableName
-						ADD COLUMN $propName VARCHAR(255)  NULL DEFAULT NULL; \n";
-					break;
-				case "ts":
-					$sqlDefs[] = "ALTER TABLE $tableName
-						ADD COLUMN $propName int(11) unsigned NULL DEFAULT NULL; \n";
-					break;
-				case "int":
-					$sqlDefs[] = "ALTER TABLE $tableName
-						ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
-					break;
-				case "text":
-					$sqlDefs[] = "ALTER TABLE $tableName
-						ADD COLUMN $propName longtext NULL; \n";
-					break;
-				case "lob":
-					$sqlDefs[] = "ALTER TABLE $tableName
-						ADD COLUMN $propName longblob NULL; \n";
-					break;
-				case "date":
-					$sqlDefs[] = "ALTER TABLE $tableName
-						ADD COLUMN $propName datetime NULL DEFAULT NULL; \n";
-					break;
-				default:
-					$sqlDefs[] = "ALTER TABLE $tableName
-						ADD COLUMN $propName VARCHAR(255) NULL DEFAULT NULL; \n";
-					break;
-			}
+			$colName  = $qc.$_col['name'].$qc;
+			$sqlDefs[] = sprintf(
+				"ALTER TABLE %s ADD COLUMN %s %s%s %s %s %s",
+				$tableName,
+				$propName,
+				$type,
+				@$_col['len'] ? "(".$_col['len'].")":"",
+				@$_col['us']  ? 'unsigned':'',
+				@$_col['pk']  == 1 ? 'PRIMARY KEY AUTO_INCREMENT':'',
+				$_col['null'] === TRUE ? 'NULL': 'NOT NULL',
+				$_col['def']  !== NULL ? 'DEFAULT '.$_col['def']: ''
+			);
 		}
 
 		if ($conn->collation != '') {
