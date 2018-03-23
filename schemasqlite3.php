@@ -44,14 +44,10 @@ class Metrodb_Schemasqlite3 {
 
 
 	/**
-	 * Return column definitions in array format
+	 * Return table definition in array format
 	 *
-	 * @return Array   list of structures that define a table's columns.
+	 * @return Array   keys are 'table', 'fields', 'indexes', 'uniques'
 	 */
-	public function _getTableColumns($conn, $tableName) {
-		return $this->_getTableDef($conn, $tableName);
-	}
-
 	public function _getTableDef($conn, $tableName) {
 
 		//$dbfields = $conn->query("select * from sqlite_master where type='table' and tbl_name ='$tableName'");
@@ -232,11 +228,7 @@ class Metrodb_Schemasqlite3 {
 		$sql .= implode(",\n",$sqlDefs);
 		$sql .= "\n) ". $conn->tableOpts.";";
 
-		if ($conn->collation != '') {
-			$sqlStmt = array($sql,  "ALTER TABLE $tableName ".$conn->collation);
-		} else {
-			$sqlStmt = array($sql);
-		}
+		$sqlStmt = array($sql);
 
 		foreach ($tableDef['indexes'] as $_index) {
 			if (!@count($_index['cols'])) { continue; }

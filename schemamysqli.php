@@ -29,16 +29,11 @@ class Metrodb_Schemamysqli {
 		return $_idx;
 	}
 
-
 	/**
-	 * Return column definitions in array format
+	 * Return table definition in array format
 	 *
-	 * @return Array   list of structures that define a table's columns.
+	 * @return Array   keys are 'table', 'fields', 'indexes', 'uniques'
 	 */
-	public function _getTableColumns($conn, $tableName) {
-		return $this->_getTableDef($conn, $tableName);
-	}
-
 	public function _getTableDef($conn, $tableName) {
 
 		$dbfields = $conn->queryGetAll("show columns from `$tableName`");
