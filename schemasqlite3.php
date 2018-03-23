@@ -114,7 +114,7 @@ class Metrodb_Schemasqlite3 {
 
 			$colName  = $qc.$_col['name'].$qc;
 			$sqlDefs[] = sprintf(
-				" ALTER TABLE %s ADD COLUMN %s %s%s %s %s %s",
+				"ALTER TABLE %s ADD COLUMN %s %s%s %s %s %s %s",
 				$tableName,
 				$propName,
 				$type,
@@ -122,7 +122,8 @@ class Metrodb_Schemasqlite3 {
 				@$_col['len'] ? "":"",
 				//@$_col['us']  ? 'unsigned':'',
 				@$_col['us'] == 1 ? '':'',
-				@$_col['pk'] == 1 ? 'PRIMARY KEY AUTOINCREMENT':'',
+				@$_col['pk'] == 1 ? 'PRIMARY KEY':'',
+				@$_col['pk'] == 1 && @$type == 'INTEGER' ? 'AUTOINCREMENT':'',
 				$_col['null'] === TRUE ? 'NULL': 'NOT NULL',
 				$_col['def']  !== NULL ? 'DEFAULT '.$_col['def']: ''
 			);
@@ -216,12 +217,13 @@ class Metrodb_Schemasqlite3 {
 
 			//$sqlDefs[$propName] = "$colName $type(".$_col['len'].") ".$_col['flags']." ".$col['NULL']." " .$_col['default']."";
 			$sqlDefs[$propName] = sprintf(
-				"%s %s%s %s %s %s",
+				"%s %s%s %s %s %s %s",
 				$colName,
 				$type,
 				@$_col['len'] ? "":"",
 				@$_col['us']  ? '':'',
-				@$_col['pk']  ? 'PRIMARY KEY AUTOINCREMENT':'',
+				@$_col['pk']  ? 'PRIMARY KEY':'',
+				@$_col['pk'] && $type == 'INTEGER' ? 'AUTOINCREMENT':'',
 				$_col['null'] === TRUE ? 'NULL': 'NOT NULL',
 				$_col['def']  !== NULL ? 'DEFAULT '.$_col['def']: ''
 			);

@@ -105,15 +105,25 @@ class Metrodb_Schema {
 		$keys       = array_keys($vars);
 
 		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $keys)) {
-			$fieldList[] = array(
-				'name'=>  $dataitem->_pkey,
-				'type'=>  'int',
-				'len' =>  11,
-				'pk'  =>   1,
-				'us'  =>   1,
-				'def'  => NULL,
-				'null' => FALSE
-			);
+			$type = 'int';
+			if (array_key_exists($dataitem->_pkey, $dataitem->_typeMap)) {
+				$type = $dataitem->_typeMap[ $dataitem->_pkey ];
+			}
+			if ($type !== 'int') {
+				$field = $this->schemaDriver->sqlDefForType($dataitem->_pkey, $type);
+				$field['pk'] = 1;
+				$fieldList[] = $field;
+			} else {
+				$fieldList[] = array(
+					'name'=>  $dataitem->_pkey,
+					'type'=>  $type,
+					'len' =>  11,
+					'pk'  =>   1,
+					'us'  =>   1,
+					'def'  => NULL,
+					'null' => FALSE
+				);
+			}
 		}
 
 		foreach ($keys as $k) {
