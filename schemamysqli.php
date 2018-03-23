@@ -21,7 +21,7 @@ class Metrodb_Schemamysqli {
 		while ($conn->nextRecord()) {
 			extract($conn->record);
 			if (! array_key_exists($Key_name, $_idx)) {
-				$_idx[$Key_name] = ['column'=>[], 'unique'=>false];
+				$_idx[$Key_name] = ['column'=>[], 'unique'=>FALSE];
 			}
 			$_idx[$Key_name]['column'][] = $Column_name;
 			$_idx[$Key_name]['unique'] = $Non_unique == '1'? FALSE:TRUE;
@@ -40,15 +40,15 @@ class Metrodb_Schemamysqli {
 		//mysqli_list_fields is deprecated, by more powerful than show columns
 		#$dbfields = mysqli_list_fields($conn->database, $table, $conn->driverId);
 		if (!$dbfields) {
-			return false;
+			return FALSE;
 		}
 		$returnFields = array();
-		foreach($dbfields as $_st) {
+		foreach ($dbfields as $_st) {
 			$name = $_st['Field'];
 			$type = $_st['Type'];
 			$size = '';
 			if (strpos($type, '(') !== FALSE) {
-				$size = substr($type, strpos($type, '(')+1,  (strpos($type, ')') -strpos($type, '(')-1) );
+				$size = substr($type, strpos($type, '(')+1, (strpos($type, ')') -strpos($type, '(')-1));
 				$type = substr($type, 0, strpos($type, '('));
 			}
 			$def = $_st['Default'];
@@ -73,7 +73,8 @@ class Metrodb_Schemamysqli {
 				'len' =>  $size,
 				'flags'=> $flags,
 				'def'  => $def,
-				'null' => $null);
+				'null' => $null
+			);
 		}
 
 		$indexList = $this->_getTableIndexes($conn, $tableName);
@@ -89,17 +90,17 @@ class Metrodb_Schemamysqli {
 		//array('created_on'=>'ts', 'updated_on'=>'ts');
 		$finalTypes = array_merge($finalTypes, $tableDef['fields']);
 
-
-		$qc  = $conn->qc;
+		$qc = $conn->qc;
 
 		foreach($finalTypes as $_col) {
 			$propName = $_col['name'];
 			$type     = $_col['type'];
+			$colName  = $qc.$_col['name'].$qc;
 			if ($type == 'int') { $type = 'INTEGER'; }
 
-			$colName  = $qc.$_col['name'].$qc;
 			//$sqlDefs[$propName] = "$colName $type(".$_col['len'].") ".$_col['flags']." ".$col['NULL']." " .$_col['default']."";
-			$sqlDefs[$propName] = sprintf("%s %s%s %s %s %s", 
+			$sqlDefs[$propName] = sprintf(
+				"%s %s%s %s %s %s",
 				$colName,
 				$type,
 				@$_col['len'] ? "(".$_col['len'].")":"",
@@ -112,11 +113,11 @@ class Metrodb_Schemamysqli {
 
 		$tableName = $qc.$tableDef['table'].$qc;
 		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
-		$sql .= implode(",\n",$sqlDefs);
+		$sql .= implode(",\n", $sqlDefs);
 		$sql .= "\n) ". $conn->tableOpts.";";
 
 		if ($conn->collation != '') {
-			$sqlStmt = array($sql,  "ALTER TABLE $tableName ".$conn->collation);
+			$sqlStmt = array($sql, "ALTER TABLE $tableName ".$conn->collation);
 		} else {
 			$sqlStmt = array($sql);
 		}
@@ -168,37 +169,37 @@ class Metrodb_Schemamysqli {
 		/**
 		 * build SQL
 		 */
-		foreach($finalTypes as $propName=>$type) {
+		foreach($finalTypes as $propName => $type) {
 			$propName  = $qc.$propName.$qc;
-			switch($type) {
-			case "email":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName VARCHAR(255)  NULL DEFAULT NULL; \n";
-				break;
-			case "ts":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) unsigned NULL DEFAULT NULL; \n";
-				break;
-			case "int":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
-				break;
-			case "text":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName longtext NULL; \n";
-				break;
-			case "lob":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName longblob NULL; \n";
-				break;
-			case "date":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName datetime NULL DEFAULT NULL; \n";
-				break;
-			default:
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName VARCHAR(255) NULL DEFAULT NULL; \n";
-				break;
+			switch ($type) {
+				case "email":
+					$sqlDefs[] = "ALTER TABLE $tableName
+						ADD COLUMN $propName VARCHAR(255)  NULL DEFAULT NULL; \n";
+					break;
+				case "ts":
+					$sqlDefs[] = "ALTER TABLE $tableName
+						ADD COLUMN $propName int(11) unsigned NULL DEFAULT NULL; \n";
+					break;
+				case "int":
+					$sqlDefs[] = "ALTER TABLE $tableName
+						ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
+					break;
+				case "text":
+					$sqlDefs[] = "ALTER TABLE $tableName
+						ADD COLUMN $propName longtext NULL; \n";
+					break;
+				case "lob":
+					$sqlDefs[] = "ALTER TABLE $tableName
+						ADD COLUMN $propName longblob NULL; \n";
+					break;
+				case "date":
+					$sqlDefs[] = "ALTER TABLE $tableName
+						ADD COLUMN $propName datetime NULL DEFAULT NULL; \n";
+					break;
+				default:
+					$sqlDefs[] = "ALTER TABLE $tableName
+						ADD COLUMN $propName VARCHAR(255) NULL DEFAULT NULL; \n";
+					break;
 			}
 		}
 
@@ -224,7 +225,8 @@ class Metrodb_Schemamysqli {
 			'us'   => 0,
 			'pk'   => 0,
 			'def'  => '',
-			'null' => TRUE);
+			'null' => TRUE
+		);
 
 		switch($type) {
 			case "email":

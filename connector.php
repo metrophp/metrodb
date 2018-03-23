@@ -40,8 +40,8 @@ class Metrodb_Connector {
 	public $errorNumber;
 	public $errorMessage = "";
 
-	public $extraLogging = false;
-	public $persistent = false;
+	public $extraLogging = FALSE;
+	public $persistent = FALSE;
 
 	static public $connList = array(); //cache of objects per DSN
 
@@ -157,13 +157,13 @@ class Metrodb_Connector {
 
 	public static function loadDriver($driver) {
 		if (function_exists('_make')) {
-			if (!class_exists('Metrodb_'.$driver, false)) {
+			if (!class_exists('Metrodb_'.$driver, FALSE)) {
 				_didef($driver, 'metrodb/'.$driver.'.php');
 			}
 			return _make($driver);
 		} else {
 			$className = 'Metrodb_'.$driver;
-			if (class_exists('Metrodb_'.$driver, true)) {
+			if (class_exists('Metrodb_'.$driver, TRUE)) {
 				return new $className;
 			} else {
 				include_once( dirname(__FILE__).'/'.$driver.'.php');
@@ -181,7 +181,7 @@ class Metrodb_Connector {
 		$t = Metrodb_Connector::getDsn($dsn);
 
 		if ( $t === NULL ) {
-			return false;
+			return FALSE;
 		}
 
 		$_dsn = parse_url($t);
@@ -218,7 +218,7 @@ class Metrodb_Connector {
 		}
 
 		Metrodb_Connector::$connList[$dsn] = $driver;
-		return true;
+		return TRUE;
 	}
 
 	/**
@@ -294,7 +294,7 @@ class Metrodb_Connector {
 	 *
 	 * @abstract
 	 */
-	public function nextRecord($resId = false) {}
+	public function nextRecord($resId = FALSE) {}
 
 
 	/**
@@ -426,7 +426,7 @@ class Metrodb_Connector {
 		$thisClassNameParts = explode('_', get_class($this));
 		$driverName         = strtolower($thisClassNameParts[1]);
 		$driverClassName    = 'Metrodb_Schema'.$driverName;
-		if (class_exists('Metrodb_Schema'.$driverName, true)) {
+		if (class_exists('Metrodb_Schema'.$driverName, TRUE)) {
 			$driver = new $driverClassName;
 		} else {
 			include_once( dirname(__FILE__).'/schema'.$driverName.'.php');
@@ -457,7 +457,7 @@ class Metrodb_Connector {
 	 */
 	public function onLoadError($di) {
 		if (!$this->dynamicSchema) {
-			return false;
+			return FALSE;
 		}
 
 		$schema   = $this->getSchema();
@@ -470,7 +470,7 @@ class Metrodb_Connector {
 		foreach ($sqlDefs as $sql) {
 			$this->query($sql);
 		}
-		return true;
+		return TRUE;
 	}
 
 	/**
@@ -480,7 +480,7 @@ class Metrodb_Connector {
 	 */
 	public function onSaveError($di) {
 		if (!$this->dynamicSchema) {
-			return false;
+			return FALSE;
 		}
 
 		$schema = $this->getSchema();
@@ -493,6 +493,6 @@ class Metrodb_Connector {
 		foreach ($sqlDefs as $sql) {
 			$this->query($sql);
 		}
-		return true;
+		return TRUE;
 	}
 }

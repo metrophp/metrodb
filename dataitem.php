@@ -234,7 +234,7 @@ class Metrodb_Dataitem {
 		} else if (!isset($this->_pkey) || $this->_pkey === NULL) {
 			$atom = '';
 			foreach ($this->_uniqs as $uni) {
-				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
+				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>TRUE);
 				$atom = $this->_whereAtomToString($struct, $atom);
 			}
 			//causes problems on sqlite
@@ -244,20 +244,20 @@ class Metrodb_Dataitem {
 
 		if (!$db->query($this->buildSelect($whereQ))) {
 			if (!$db->onLoadError($this)) {
-				return false;
+				return FALSE;
 			}
 			$db->query($this->buildSelect($whereQ));
 		}
 
 		if(!$db->nextRecord()) {
-			return false;
+			return FALSE;
 		}
 		$db->freeResult();
 		if (empty($db->record)) {
-			return false;
+			return FALSE;
 		}
 		$this->row2Obj($db->record);
-		$this->_isNew = false;
+		$this->_isNew = FALSE;
 		return TRUE;
 	}
 
@@ -279,14 +279,14 @@ class Metrodb_Dataitem {
 		}
 		$db->query( $this->buildSelect() );
 		if(!$db->nextRecord()) {
-			return false;
+			return FALSE;
 		}
 		$db->freeResult();
 		if (empty($db->record)) {
-			return false;
+			return FALSE;
 		}
 		$this->row2Obj($db->record);
-		$this->_isNew = false;
+		$this->_isNew = FALSE;
 		return TRUE;
 	}
 
@@ -327,7 +327,7 @@ class Metrodb_Dataitem {
 			$x->_excludes = $this->_excludes;
 			$x->_nuls     = $this->_nuls;
 			$x->row2Obj($db->record);
-			$x->_isNew = false;
+			$x->_isNew = FALSE;
 			if ( $this->_rsltByPkey == TRUE) {
 				if (! isset($db->record[$x->_pkey])) {
 					$objs[] = $x;
@@ -419,11 +419,11 @@ class Metrodb_Dataitem {
 
 		$db->query( $this->buildCountSelect($whereQ) );
 		if(!$db->nextRecord()) {
-			return false;
+			return FALSE;
 		}
 		if (empty($db->record)) {
 			$db->freeResult();
-			return false;
+			return FALSE;
 		}
 
 		$count = $db->record['total_rec'];
@@ -444,7 +444,7 @@ class Metrodb_Dataitem {
 			//optionally translate k to k prime
 			$this->{$k} = $v;
 		}
-		$this->_isNew = false;
+		$this->_isNew = FALSE;
 	}
 
 
@@ -486,7 +486,7 @@ class Metrodb_Dataitem {
 				$whereQ = '';
 				$atom = '';
 				foreach ($this->_uniqs as $uni) {
-					$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
+					$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>TRUE);
 					$atom = $this->_whereAtomToString($struct, $atom)."\n";
 				}
 				$whereQ .= $atom;
@@ -589,7 +589,7 @@ class Metrodb_Dataitem {
 			$sql .= ' WHERE ';
 			$atom = '';
 			foreach ($this->_uniqs as $uni) {
-				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
+				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>TRUE);
 				$atom = $this->_whereAtomToString($struct, $atom)."\n";
 			}
 			//causes problems on sqlite

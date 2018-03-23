@@ -18,13 +18,13 @@ class Metrodb_Schemasqlite3 {
 			extract($conn->record);
 
 			if (! array_key_exists($name, $_idx)) {
-				$_idx[$name] = ['column'=>[], 'unique'=>false];
+				$_idx[$name] = ['column'=>[], 'unique'=>FALSE];
 			}
 			$matches = [];
-			//the 'sql' key holds the entire sql to recreate the 
+			//the 'sql' key holds the entire sql to recreate the
 			//index, so the colums will be at the end inside
 			//parentesis
-			$cnt = preg_match( '/.*\((.*)\)/', $sql, $matches);
+			$cnt = preg_match('/.*\((.*)\)/', $sql, $matches);
 			if ($matches[1]) {
 				$cols = explode(', ', $matches[1]);
 				$cols = array_map(function($val) {
@@ -34,9 +34,9 @@ class Metrodb_Schemasqlite3 {
 			}
 
 			if (stristr('unique ', $sql)) {
-				$_idx[$name]['unique'] = true;
+				$_idx[$name]['unique'] = TRUE;
 			} else {
-				$_idx[$name]['unique'] = false;
+				$_idx[$name]['unique'] = FALSE;
 			}
 		}
 		return $_idx;
@@ -59,10 +59,10 @@ class Metrodb_Schemasqlite3 {
 		//mysqli_list_fields is deprecated, by more powerful than show columns
 		#$dbfields = mysqli_list_fields($conn->database, $table, $conn->driverId);
 		if (!$dbfields) {
-			return false;
+			return FALSE;
 		}
 		$returnFields = array();
-		foreach($dbfields as $_st) {
+		foreach ($dbfields as $_st) {
 			$name = $_st['name'];
 			$type = $_st['type'];
 			$size = '';
@@ -75,10 +75,10 @@ class Metrodb_Schemasqlite3 {
 			$def = $_st['dflt_value'];
 			$flags = '';
 			if ($def == '"NULL"') {
-				$null = true;
+				$null = TRUE;
 				$flags .= 'null ';
 			} else {
-				$null = false;
+				$null = FALSE;
 				$flags .= 'not_null ';
 			}
 
@@ -92,7 +92,8 @@ class Metrodb_Schemasqlite3 {
 				'len' =>  $size,
 				'flags'=> $flags,
 				'def'  => $def,
-				'null' => $null);
+				'null' => $null
+			);
 		}
 
 		$indexList = $this->_getTableIndexes($conn, $tableName);
@@ -106,13 +107,14 @@ class Metrodb_Schemasqlite3 {
 
 
 		$tableName = $qc.$tableName.$qc;
-		foreach($finalTypes as $_col) {
+		foreach ($finalTypes as $_col) {
 			$propName = $_col['name'];
 			$type     = $_col['type'];
 			if ($type == 'int') { $type = 'INTEGER'; }
 
 			$colName  = $qc.$_col['name'].$qc;
-			$sqlDefs[] = sprintf(" ALTER TABLE %s ADD COLUMN %s %s%s %s %s %s", 
+			$sqlDefs[] = sprintf(
+				" ALTER TABLE %s ADD COLUMN %s %s%s %s %s %s",
 				$tableName,
 				$propName,
 				$type,
@@ -147,9 +149,10 @@ class Metrodb_Schemasqlite3 {
 			'us'   => 0,
 			'pk'   => 0,
 			'def'  => '',
-			'null' => TRUE);
+			'null' => TRUE
+		);
 
-		switch($type) {
+		switch ($type) {
 			case "email":
 				$field['type'] = 'varchar';
 				$field['len']  = '255';
@@ -208,11 +211,12 @@ class Metrodb_Schemasqlite3 {
 		foreach($finalTypes as $_col) {
 			$propName = $_col['name'];
 			$type     = $_col['type'];
+			$colName  = $qc.$_col['name'].$qc;
 			if ($type == 'int') { $type = 'INTEGER'; }
 
-			$colName  = $qc.$_col['name'].$qc;
 			//$sqlDefs[$propName] = "$colName $type(".$_col['len'].") ".$_col['flags']." ".$col['NULL']." " .$_col['default']."";
-			$sqlDefs[$propName] = sprintf("%s %s%s %s %s %s", 
+			$sqlDefs[$propName] = sprintf(
+				"%s %s%s %s %s %s",
 				$colName,
 				$type,
 				@$_col['len'] ? "":"",
@@ -225,7 +229,7 @@ class Metrodb_Schemasqlite3 {
 
 		$tableName = $qc.$tableDef['table'].$qc;
 		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
-		$sql .= implode(",\n",$sqlDefs);
+		$sql .= implode(",\n", $sqlDefs);
 		$sql .= "\n) ". $conn->tableOpts.";";
 
 		$sqlStmt = array($sql);
@@ -238,5 +242,4 @@ class Metrodb_Schemasqlite3 {
 		}
 		return $sqlStmt;
 	}
-
 }

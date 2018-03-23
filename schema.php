@@ -7,11 +7,11 @@ class Metrodb_Schema {
 
 	public function __construct($dsn, $driver) {
 		if (is_object($dsn)) {
-			$this->setConnection( $dsn );
+			$this->setConnection($dsn);
 		} else {
-			$this->setConnection( Metrodb_Connector::getHandle($dsn) );
+			$this->setConnection(Metrodb_Connector::getHandle($dsn));
 		}
-		$this->setSchemaDriver( $driver );
+		$this->setSchemaDriver($driver);
 	}
 
 	public function setSchemaDriver($d) {
@@ -60,9 +60,9 @@ class Metrodb_Schema {
 		$fields     = array();
 		$values     = array();
 		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
+			if (substr($k, 0, 1) == '_') { continue; }
 			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
+			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL) {continue;}
 			if (in_array($k, $colNames)) {
 				//we don't need to alter existing columns
 				continue;
@@ -75,7 +75,7 @@ class Metrodb_Schema {
 		}
 
 		$fieldList = [];
-		foreach ($finalTypes as $k=>$type) {
+		foreach ($finalTypes as $k => $type) {
 			$fieldList[] = $this->schemaDriver->sqlDefForType($k, $type);
 		}
 		return $fieldList;
@@ -88,6 +88,9 @@ class Metrodb_Schema {
 		return [];
 	}
 
+	/**
+	 * @TODO: dataitems don't specify indexes yet
+	 */
 	public function getMissingUniques($tableDef, $dataitem) {
 		return [];
 	}
@@ -101,7 +104,7 @@ class Metrodb_Schema {
 		$vars       = get_object_vars($dataitem);
 		$keys       = array_keys($vars);
 
-		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $keys)){
+		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $keys)) {
 			$fieldList[] = array(
 				'name'=>  $dataitem->_pkey,
 				'type'=>  'int',
@@ -109,13 +112,14 @@ class Metrodb_Schema {
 				'pk'  =>   1,
 				'us'  =>   1,
 				'def'  => NULL,
-				'null' => FALSE);
-
+				'null' => FALSE
+			);
 		}
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
 
-			if ($dataitem->_pkey !== NULL && $dataitem->_pkey == $k){
+		foreach ($keys as $k) {
+			if (substr($k, 0, 1) == '_') { continue; }
+
+			if ($dataitem->_pkey !== NULL && $dataitem->_pkey == $k) {
 				continue;
 			}
 
@@ -126,7 +130,7 @@ class Metrodb_Schema {
 			}
 			$fieldList[] = $this->schemaDriver->sqlDefForType($k, $type);
 		}
-		if ( @count($dataitem->_uniqs ) ) {
+		if ( @count($dataitem->_uniqs) ) {
 			$indexList[] = [
 				'name'=>'unique_idx',
 				'type'=>'unique',
@@ -138,6 +142,8 @@ class Metrodb_Schema {
 	}
 
 	/**
+	 * Creates a tableDef array that represents a join table necessary for many-to-many.
+	 *
 	 * @return array list of table defs for many to many joins
 	 */
 	public function makeJoinTableDef($dataitem) {
@@ -162,6 +168,8 @@ class Metrodb_Schema {
 	}
 
 	/**
+	 * Creates a virtual dataitem that represents a join table necessary for many-to-may.
+	 *
 	 * @return array list of ephemeral dataitems that represent join tables
 	 */
 	public function makeJoinDataItem($dataitem) {
@@ -173,11 +181,13 @@ class Metrodb_Schema {
 
 		foreach ($dataitem->_relatedMany as $rel) {
 			$di = \_makeNew('dataitem', $rel['jtable']);
+
 			$di->_typeMap[ $rel['fk'] ] = 'int';
 			$di->_typeMap[ $rel['lk'] ] = 'int';
 
 			$di->{ $rel['fk'] } = 0;
 			$di->{ $rel['lk'] } = 0;
+
 			$diList[] = $di;
 		}
 
@@ -200,11 +210,11 @@ class Metrodb_Schema {
 		$idx  = $this->getMissingIndexes($tableDef, $dataitem);
 		$unq  = $this->getMissingUniques($tableDef, $dataitem);
 
-		$tableDefs   = [];
+		$tableDefs = [];
 		if (empty($cols) && empty($idx) && empty($unq)) {
 			return $tableDefs;
 		}
-		$tableDefs[] = ['table'=>$tableDef['table'], 'fields'=>$cols, 'indexes'=>$idx, 'uniques'=>$unq, 'alter'=>true];
+		$tableDefs[] = ['table'=>$tableDef['table'], 'fields'=>$cols, 'indexes'=>$idx, 'uniques'=>$unq, 'alter'=>TRUE];
 
 		$diList = $this->makeJoinDataItem($dataitem);
 		foreach ($diList as $_di) {
@@ -221,11 +231,10 @@ class Metrodb_Schema {
 		$tableDefs[] = $this->makeTableDef($dataitem);
 		$diList      = $this->makeJoinDataItem($dataitem);
 		foreach ($diList as $_di) {
-			$_tableDef = $this->makeTableDef($_di);
+			$_tableDef   = $this->makeTableDef($_di);
 			$tableDefs[] = $_tableDef;
 		}
 		return $tableDefs;
-
 	}
 
 	/**
