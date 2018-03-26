@@ -56,7 +56,7 @@ class Metrodb_Schema {
 		}
 		$finalTypes = array();
 		$vars       = get_object_vars($dataitem);
-		$keys       = array_keys($vars);
+		$keys       = array_merge(array_keys($vars), array_keys($dataitem->_typeMap));
 		$fields     = array();
 		$values     = array();
 		foreach ($keys as $k) {
@@ -102,7 +102,7 @@ class Metrodb_Schema {
 		$indexList    = [];
 
 		$vars       = get_object_vars($dataitem);
-		$keys       = array_keys($vars);
+		$keys       = array_merge(array_keys($vars), array_keys($dataitem->_typeMap));
 
 		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $keys)) {
 			$type = 'int';
