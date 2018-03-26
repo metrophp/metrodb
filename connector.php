@@ -455,35 +455,12 @@ class Metrodb_Connector {
 	 *
 	 * @param Object $di  the dataitem to use as schema
 	 */
-	public function onLoadError($di) {
+	public function onSchemaError($di) {
 		if (!$this->dynamicSchema) {
 			return FALSE;
 		}
 
 		$schema   = $this->getSchema();
-		$tableDef = $schema->getTable($di->_table);
-		if (!$tableDef) {
-			$sqlDefs = $schema->dynamicCreateSql($di);
-		} else {
-			$sqlDefs = $schema->dynamicAlterSql($tableDef, $di);
-		}
-		foreach ($sqlDefs as $sql) {
-			$this->query($sql);
-		}
-		return TRUE;
-	}
-
-	/**
-	 * Add columns at runtime, or create a missing table.
-	 *
-	 * @param Object $di  the dataitem to use as schema
-	 */
-	public function onSaveError($di) {
-		if (!$this->dynamicSchema) {
-			return FALSE;
-		}
-
-		$schema = $this->getSchema();
 		$tableDef = $schema->getTable($di->_table);
 		if (!$tableDef) {
 			$sqlDefs = $schema->dynamicCreateSql($di);

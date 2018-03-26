@@ -172,7 +172,7 @@ class Metrodb_Dataitem {
 		if ( $this->_isNew ) {
 			if (!$db->query( $this->buildInsert())) {
 				$err = $db->errorMessage;
-				if (!$db->onSaveError($this)) {
+				if (!$db->onSchemaError($this)) {
 					return FALSE;
 				}
 				$db->query($this->buildInsert());
@@ -188,7 +188,7 @@ class Metrodb_Dataitem {
 			if (!$db->query($this->buildUpdate())) {
 				$err = $db->errorMessage;
 				// TRUE performs buildUpdate instead of buildInsert
-				if (!$db->onSaveError($this)) {
+				if (!$db->onSchemaError($this)) {
 					return FALSE;
 				}
 				$db->query($this->buildUpdate());
@@ -243,7 +243,7 @@ class Metrodb_Dataitem {
 		}
 
 		if (!$db->query($this->buildSelect($whereQ))) {
-			if (!$db->onLoadError($this)) {
+			if (!$db->onSchemaError($this)) {
 				return FALSE;
 			}
 			$db->query($this->buildSelect($whereQ));
@@ -309,7 +309,7 @@ class Metrodb_Dataitem {
 			$whereQ = $this->_pkey .' = '.$where;
 		 */
 		if (!$db->query($this->buildSelect($whereQ))) {
-			if (!$db->onLoadError($this)) {
+			if (!$db->onSchemaError($this)) {
 				return array();
 			}
 			$db->query($this->buildSelect($whereQ));
@@ -364,7 +364,7 @@ class Metrodb_Dataitem {
 		 */
 
 		if (!$db->query($this->buildSelect($whereQ))) {
-			if (!$db->onLoadError($this)) {
+			if (!$db->onSchemaError($this)) {
 				return array();
 			}
 			$db->query($this->buildSelect($whereQ));
