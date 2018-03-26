@@ -396,15 +396,6 @@ class Metrodb_Connector {
 		}
 	}
 
-	/**
-	 * Return column definitions in array format
-	 *
-	 * @return Array   list of structures that define a table's columns.
-	 */
-	public function getTableColumns($table) {
-		return array();
-	}
-
 	public function rollbackTx() {
 		$this->exec("ROLLBACK TRANSACTION");
 	}
