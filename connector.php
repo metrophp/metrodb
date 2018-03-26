@@ -447,20 +447,28 @@ class Metrodb_Connector {
 	 * @param Object $di  the dataitem to use as schema
 	 */
 	public function onSchemaError($di) {
-		if (!$this->dynamicSchema) {
+		$s          = $this->getSchema();
+		$tableDef   = $s->getTable($di->_table);
+		$tableDiffs = $s->getDifference($di, $tableDef);
+
+		if ($this->dynamicSchema) {
+			$sqlDefs   = $s->renderDifference($tableDiffs);
+			foreach ($sqlDefs as $sql) {
+				$this->query($sql);
+			}
+			return TRUE;
+		}
+		if (function_exists('_isdidef') && _isdidef('migrationWriter')) {
+			$writer = _make('migrationWriter');
+			$sqlDefs   = $s->renderDifference($tableDiffs, $writer);
+			return TRUE;
+		}
+
+		if ($this->log) {
+			$this->log->error("Schema error. Either enable dynamicSchema or define a migrationWriter.", [$tableDiffs]);
 			return FALSE;
 		}
 
-		$schema   = $this->getSchema();
-		$tableDef = $schema->getTable($di->_table);
-		if (!$tableDef) {
-			$sqlDefs = $schema->dynamicCreateSql($di);
-		} else {
-			$sqlDefs = $schema->dynamicAlterSql($tableDef, $di);
-		}
-		foreach ($sqlDefs as $sql) {
-			$this->query($sql);
-		}
-		return TRUE;
+		throw new \Exception("Schema error. Either enable dynamicSchema or define a migrationWriter.");
 	}
 }
