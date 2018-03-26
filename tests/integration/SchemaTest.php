@@ -47,4 +47,14 @@ class Metrodb_Tests_Integration_Schema extends PHPUnit_Framework_TestCase {
 			$columnList
 		);
 	}
+
+	public function test_non_integer_pkey() {
+		$s = new Metrodb_Schema('sqlite3', new Metrodb_Schemasqlite3());
+		$di         = new Metrodb_Dataitem('foobar', 'my_string_pk');
+		$di->_typeMap['my_string_pk'] = 'string';
+		$tableDef   = $s->makeTableDef($di);
+
+		$this->assertEquals( 'varchar', $tableDef['fields'][0]['type'] );
+		$this->assertEquals( 1, $tableDef['fields'][0]['pk'] );
+	}
 }
