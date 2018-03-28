@@ -5,9 +5,10 @@
  */
 class Metrodb_Connector {
 
-	public $qc        = '"';
-	public $collation = '';
-	public $tableOpts = '';
+	public $qc            = '"';
+	public $collation     = '';
+	public $tableOpts     = '';
+	public $dynamicSchema = FALSE;
 
 	public function resources($request) {
 		_didef('dataitem',  'metrodb/dataitem.php');
@@ -39,8 +40,8 @@ class Metrodb_Connector {
 	public $errorNumber;
 	public $errorMessage = "";
 
-	public $extraLogging = false;
-	public $persistent = false;
+	public $extraLogging = FALSE;
+	public $persistent = FALSE;
 
 	static public $connList = array(); //cache of objects per DSN
 
@@ -57,6 +58,10 @@ class Metrodb_Connector {
 			return 'default';
 
 		return @$g_db_handle[$tableName];
+	}
+
+	public function setDynamicSchema() {
+		$this->dynamicSchema = TRUE;
 	}
 
 	/**
@@ -152,13 +157,13 @@ class Metrodb_Connector {
 
 	public static function loadDriver($driver) {
 		if (function_exists('_make')) {
-			if (!class_exists('Metrodb_'.$driver, false)) {
+			if (!class_exists('Metrodb_'.$driver, FALSE)) {
 				_didef($driver, 'metrodb/'.$driver.'.php');
 			}
 			return _make($driver);
 		} else {
 			$className = 'Metrodb_'.$driver;
-			if (class_exists('Metrodb_'.$driver, true)) {
+			if (class_exists('Metrodb_'.$driver, TRUE)) {
 				return new $className;
 			} else {
 				include_once( dirname(__FILE__).'/'.$driver.'.php');
@@ -176,7 +181,7 @@ class Metrodb_Connector {
 		$t = Metrodb_Connector::getDsn($dsn);
 
 		if ( $t === NULL ) {
-			return false;
+			return FALSE;
 		}
 
 		$_dsn = parse_url($t);
@@ -213,7 +218,7 @@ class Metrodb_Connector {
 		}
 
 		Metrodb_Connector::$connList[$dsn] = $driver;
-		return true;
+		return TRUE;
 	}
 
 	/**
@@ -289,7 +294,7 @@ class Metrodb_Connector {
 	 *
 	 * @abstract
 	 */
-	public function nextRecord($resId = false) {}
+	public function nextRecord($resId = FALSE) {}
 
 
 	/**
@@ -362,6 +367,7 @@ class Metrodb_Connector {
 	 */
 	public function getNumRows() {}
 
+
 	/**
 	 * for commands like "set FLAG=1" or "BEGIN TRANSACTION"
 	 * @see executeStatement($stmt)
@@ -390,15 +396,6 @@ class Metrodb_Connector {
 		}
 	}
 
-	/**
-	 * Return column definitions in array format
-	 *
-	 * @return Array   list of structures that define a table's columns.
-	 */
-	public function getTableColumns($table) {
-		return array();
-	}
-
 	public function rollbackTx() {
 		$this->exec("ROLLBACK TRANSACTION");
 	}
@@ -416,162 +413,19 @@ class Metrodb_Connector {
 		return $this->exec("TRUNCATE ".$qc.$tbl.$qc);
 	}
 
-	/**
-	 * Create a number of SQL statements which will
-	 * update the existing table to the required spec.
-	 */
-	public function dynamicAlterSql($cols, $dataitem) {
-		$sqlDefs = array();
-		$finalTypes = array();
-
-		$colNames = array();
-		foreach ($cols as $_col) {
-			$colNames[] = $_col['name'];
-		}
-
-		$finalTypes = array();
-		$vars = get_object_vars($dataitem);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
-			if (in_array($k, $colNames)) {
-				//we don't need to alter existing columsn
-				continue;
-			}
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				$finalTypes[$k] = "string";
-			}
-		}
-
-		$tableName = $this->qc.$dataitem->_table.$this->qc;
-		/**
-		 * build SQL
-		 */
-		foreach($finalTypes as $propName=>$type) {
-			$propName  = $this->qc.$propName.$this->qc;
-			switch($type) {
-			case "email":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName VARCHAR(255)  NULL DEFAULT NULL; \n";
-				break;
-			case "ts":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) unsigned NULL DEFAULT NULL; \n";
-				break;
-			case "int":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName int(11) NULL DEFAULT NULL; \n";
-				break;
-			case "text":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName longtext NULL; \n";
-				break;
-			case "lob":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName longblob NULL; \n";
-				break;
-			case "date":
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName datetime NULL DEFAULT NULL; \n";
-				break;
-			default:
-				$sqlDefs[] = "ALTER TABLE $tableName
-					ADD COLUMN $propName VARCHAR(255) NULL DEFAULT NULL; \n";
-				break;
-
-			}
-		}
-
-		if ($this->collation != '') {
-			$sqlDefs[] = "\n\nALTER TABLE $tableName ".$this->collation.";";
-		}
-
-		return $sqlDefs;
-	}
-
-	public function dynamicCreateSql($dataitem) {
-		$sql = "";
-		//$props = $dataitem->__get_props();
-		$finalTypes = array('created_on'=>'ts', 'updated_on'=>'ts');
-
-		$vars = get_object_vars($dataitem);
-		$keys = array_keys($vars);
-		$fields = array();
-		$values = array();
-		foreach ($keys as $k) {
-			if (substr($k,0,1) == '_') { continue; }
-			//fix for SQLITE
-			if (isset($dataitem->_pkey) && $k === $dataitem->_pkey && $vars[$k] == NULL ) {continue;}
-
-			if (array_key_exists($k, $dataitem->_typeMap)) {
-				$finalTypes[$k] = $dataitem->_typeMap[$k];
-			} else {
-				//only override created_on and update_on explicitly
-				if (!isset($finalTypes[$k])) {
-					$finalTypes[$k] = "string";
-				}
-			}
-		}
-
-		$tableName = $this->qc.$dataitem->_table.$this->qc;
-		/**
-		 * build SQL
-		 */
-		$sql = "CREATE TABLE IF NOT EXISTS ".$tableName." ( \n";
-
-		if ($dataitem->_pkey !== NULL && ! array_key_exists($dataitem->_pkey, $finalTypes)) {
-			$sqlDefs[$dataitem->_pkey] = $this->qc.$dataitem->_pkey.$this->qc." int(11) unsigned auto_increment primary key";
-		}
-
-		foreach($finalTypes as $propName=>$type) {
-			$colName = $this->qc.$propName.$this->qc;
-			switch($type) {
-			case "email":
-				$sqlDefs[$propName] = "$colName varchar(255)";
-				break;
-			case "ts":
-				$sqlDefs[$propName] = "$colName int(11) unsigned NULL DEFAULT NULL";
-				break;
-			case "int":
-				$sqlDefs[$propName] = "$colName int(11) NULL";
-				break;
-			case "text":
-				$sqlDefs[$propName] = "$colName longtext NULL";
-				break;
-			case "lob":
-				$sqlDefs[$propName] = "$colName longblob NULL";
-				break;
-			case "date":
-				$sqlDefs[$propName] = "$colName datetime NULL";
-				break;
-			default:
-				$sqlDefs[$propName] = "$colName varchar(255)";
-				break;
-
-			}
-		}
-
-		$sql .= implode(",\n",$sqlDefs);
-		$sql .= "\n) ". $this->tableOpts.";";
-
-		if ($this->collation != '') {
-			$sqlStmt = array($sql,  "ALTER TABLE $tableName ".$this->collation);
+	public function getSchema() {
+		$thisClassNameParts = explode('_', get_class($this));
+		$driverName         = strtolower($thisClassNameParts[1]);
+		$driverClassName    = 'Metrodb_Schema'.$driverName;
+		if (class_exists('Metrodb_Schema'.$driverName, TRUE)) {
+			$driver = new $driverClassName;
 		} else {
-			$sqlStmt = array($sql);
+			include_once( dirname(__FILE__).'/schema'.$driverName.'.php');
+			$driver = new $driverClassName;
 		}
-
-		//create unique key on multiple columns
-		if ( count($dataitem->_uniqs ) ) {
-			$sqlStmt[] = "ALTER TABLE ".$tableName." ADD UNIQUE INDEX ".$this->qc."unique_idx".$this->qc." (".implode(',', $dataitem->_uniqs).") ";
-		}
-
-		return $sqlStmt;
+		include_once( dirname(__FILE__).'/schema.php');
+		$schema = new Metrodb_Schema($this, $driver );
+		return $schema;
 	}
 
 	public function escapeCharValue($val) {
@@ -585,5 +439,36 @@ class Metrodb_Connector {
 			$val,
 			"\x00\'\"\r\n"
 		).'\'';
+	}
+
+	/**
+	 * Add columns at runtime, or create a missing table.
+	 *
+	 * @param Object $di  the dataitem to use as schema
+	 */
+	public function onSchemaError($di) {
+		$s          = $this->getSchema();
+		$tableDef   = $s->getTable($di->_table);
+		$tableDiffs = $s->getDifference($di, $tableDef);
+
+		if ($this->dynamicSchema) {
+			$sqlDefs   = $s->renderDifference($tableDiffs);
+			foreach ($sqlDefs as $sql) {
+				$this->query($sql);
+			}
+			return TRUE;
+		}
+		if (function_exists('_isdidef') && _isdidef('migrationWriter')) {
+			$writer = _make('migrationWriter');
+			$sqlDefs   = $s->renderDifference($tableDiffs, $writer);
+			return TRUE;
+		}
+
+		if ($this->log) {
+			$this->log->error("Schema error. Either enable dynamicSchema or define a migrationWriter.", [$tableDiffs]);
+			return FALSE;
+		}
+
+		throw new \Exception("Schema error. Either enable dynamicSchema or define a migrationWriter.");
 	}
 }

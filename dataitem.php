@@ -170,11 +170,12 @@ class Metrodb_Dataitem {
 		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 
 		if ( $this->_isNew ) {
-			if (!$db->query( $this->buildInsert(), FALSE )) {
+			if (!$db->query( $this->buildInsert())) {
 				$err = $db->errorMessage;
-				if (!$this->dynamicResave($db)) {
+				if (!$db->onSchemaError($this)) {
 					return FALSE;
 				}
+				$db->query($this->buildInsert());
 			}
 			$this->_isNew = FALSE;
 			if (!isset($this->_pkey) || $this->_pkey === NULL) {
@@ -184,12 +185,13 @@ class Metrodb_Dataitem {
 				$this->{$this->_pkey} = $db->getInsertId();
 			}
 		} else {
-			if (!$db->query( $this->buildUpdate(), FALSE )) {
+			if (!$db->query($this->buildUpdate())) {
 				$err = $db->errorMessage;
 				// TRUE performs buildUpdate instead of buildInsert
-				if (!$this->dynamicResave($db, TRUE)) {
+				if (!$db->onSchemaError($this)) {
 					return FALSE;
 				}
+				$db->query($this->buildUpdate());
 			}
 			$this->_isNew = FALSE;
 			if (!isset($this->_pkey) || $this->_pkey === NULL) {
@@ -232,7 +234,7 @@ class Metrodb_Dataitem {
 		} else if (!isset($this->_pkey) || $this->_pkey === NULL) {
 			$atom = '';
 			foreach ($this->_uniqs as $uni) {
-				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
+				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>TRUE);
 				$atom = $this->_whereAtomToString($struct, $atom);
 			}
 			//causes problems on sqlite
@@ -240,23 +242,22 @@ class Metrodb_Dataitem {
 			$whereQ .= $atom;
 		}
 
-		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
-			$err = $db->errorMessage;
-
-			if (!$this->dynamicReload($db, $whereQ)) {
-				return false;
+		if (!$db->query($this->buildSelect($whereQ))) {
+			if (!$db->onSchemaError($this)) {
+				return FALSE;
 			}
+			$db->query($this->buildSelect($whereQ));
 		}
 
 		if(!$db->nextRecord()) {
-			return false;
+			return FALSE;
 		}
 		$db->freeResult();
 		if (empty($db->record)) {
-			return false;
+			return FALSE;
 		}
 		$this->row2Obj($db->record);
-		$this->_isNew = false;
+		$this->_isNew = FALSE;
 		return TRUE;
 	}
 
@@ -278,14 +279,14 @@ class Metrodb_Dataitem {
 		}
 		$db->query( $this->buildSelect() );
 		if(!$db->nextRecord()) {
-			return false;
+			return FALSE;
 		}
 		$db->freeResult();
 		if (empty($db->record)) {
-			return false;
+			return FALSE;
 		}
 		$this->row2Obj($db->record);
-		$this->_isNew = false;
+		$this->_isNew = FALSE;
 		return TRUE;
 	}
 
@@ -307,11 +308,11 @@ class Metrodb_Dataitem {
 		} else if (strlen($where) ) {
 			$whereQ = $this->_pkey .' = '.$where;
 		 */
-		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
-			$err = $db->errorMessage;
-			if (!$this->dynamicReload($db, $whereQ)) {
+		if (!$db->query($this->buildSelect($whereQ))) {
+			if (!$db->onSchemaError($this)) {
 				return array();
 			}
+			$db->query($this->buildSelect($whereQ));
 		}
 
 
@@ -326,7 +327,7 @@ class Metrodb_Dataitem {
 			$x->_excludes = $this->_excludes;
 			$x->_nuls     = $this->_nuls;
 			$x->row2Obj($db->record);
-			$x->_isNew = false;
+			$x->_isNew = FALSE;
 			if ( $this->_rsltByPkey == TRUE) {
 				if (! isset($db->record[$x->_pkey])) {
 					$objs[] = $x;
@@ -362,13 +363,12 @@ class Metrodb_Dataitem {
 			$whereQ = $this->_pkey .' = '.$where;
 		 */
 
-		if (!$db->query( $this->buildSelect($whereQ), FALSE )) {
-			$err = $db->errorMessage;
-			if (!$this->dynamicReload($db, $whereQ)) {
+		if (!$db->query($this->buildSelect($whereQ))) {
+			if (!$db->onSchemaError($this)) {
 				return array();
 			}
+			$db->query($this->buildSelect($whereQ));
 		}
-
 
 		$recs = array();
 
@@ -419,11 +419,11 @@ class Metrodb_Dataitem {
 
 		$db->query( $this->buildCountSelect($whereQ) );
 		if(!$db->nextRecord()) {
-			return false;
+			return FALSE;
 		}
 		if (empty($db->record)) {
 			$db->freeResult();
-			return false;
+			return FALSE;
 		}
 
 		$count = $db->record['total_rec'];
@@ -444,7 +444,7 @@ class Metrodb_Dataitem {
 			//optionally translate k to k prime
 			$this->{$k} = $v;
 		}
-		$this->_isNew = false;
+		$this->_isNew = FALSE;
 	}
 
 
@@ -486,7 +486,7 @@ class Metrodb_Dataitem {
 				$whereQ = '';
 				$atom = '';
 				foreach ($this->_uniqs as $uni) {
-					$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
+					$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>TRUE);
 					$atom = $this->_whereAtomToString($struct, $atom)."\n";
 				}
 				$whereQ .= $atom;
@@ -589,7 +589,7 @@ class Metrodb_Dataitem {
 			$sql .= ' WHERE ';
 			$atom = '';
 			foreach ($this->_uniqs as $uni) {
-				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>true);
+				$struct = array('k'=>$uni, 'v'=> $this->get($uni), 's'=>'=', 'andor'=>'and', 'q'=>TRUE);
 				$atom = $this->_whereAtomToString($struct, $atom)."\n";
 			}
 			//causes problems on sqlite
@@ -785,6 +785,7 @@ class Metrodb_Dataitem {
 		$this->_groupBy[] = $col;
 	}
 
+	/*
 	public function initBlank() {
 		$db = Metrodb_Connector::getHandle(NULL, $this->_table);
 		$columns = $db->getTableColumns($this->_table);
@@ -793,6 +794,7 @@ class Metrodb_Dataitem {
 			$this->{$_col['name']} = $_col['def'];
 		}
 	}
+	 */
 
 	public function hasManyToMany($table, $alias='', $tableJ='', $tableJLk='', $tableJFk='', $tableFk='') {
 		if ($tableJLk == '') { $tableJLk = $this->_pkey;}
@@ -881,48 +883,4 @@ class Metrodb_Dataitem {
 		echo "</pre>\n";
 	}
 
-	/**
-	 * Add columns at runtime, or create a missing table.
-	 *
-	 * @param Object $db  the db connection handle to use
-	 * @param bool  $doUpdate whenter or not to call $this->buildInsert() or buildUpdate()
-	 */
-	public function dynamicReload($db, $whereQ = '') {
-
-		$cols = $db->getTableColumns($this->_table);
-		if (!$cols) {
-			$sqlDefs = $db->dynamicCreateSql($this);
-		} else {
-			$sqlDefs = $db->dynamicAlterSql($cols, $this);
-		}
-		foreach ($sqlDefs as $sql) {
-			$db->query($sql);
-		}
-
-		return $db->query($this->buildSelect($whereQ));
-	}
-
-	/**
-	 * Add columns at runtime, or create a missing table.
-	 *
-	 * @param Object $db  the db connection handle to use
-	 * @param bool  $doUpdate whenter or not to call $this->buildInsert() or buildUpdate()
-	 */
-	public function dynamicResave($db, $doUpdate=FALSE) {
-
-		$cols = $db->getTableColumns($this->_table);
-		if (!$cols) {
-			$sqlDefs = $db->dynamicCreateSql($this);
-		} else {
-			$sqlDefs = $db->dynamicAlterSql($cols, $this);
-		}
-		foreach ($sqlDefs as $sql) {
-			$db->query($sql);
-		}
-
-		if ($doUpdate) {
-			return $db->query($this->buildUpdate());
-		}
-		return $db->query($this->buildInsert());
-	}
 }
