@@ -25,7 +25,7 @@ class Metrodb_Schemasqlite3 {
 			//index, so the colums will be at the end inside
 			//parentesis
 			$cnt = preg_match('/.*\((.*)\)/', $sql, $matches);
-			if ($matches[1]) {
+			if (@$matches[1]) {
 				$cols = explode(', ', $matches[1]);
 				$cols = array_map(function($val) {
 					return str_replace('"', '', $val);
