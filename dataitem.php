@@ -454,17 +454,23 @@ class Metrodb_Dataitem {
 
 
 	public function buildSelect($whereQ='') {
+		$db     = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$qc     = $db->qc;
+
 		if (count($this->_cols) > 0) {
 			$cols = implode(',',$this->_cols);
 		} else {
 			$cols = '*';
 		}
-		return "SELECT ".$cols." FROM ".$this->getTable()." ".$this->buildJoin(). " ".$this->buildWhere($whereQ). " ". $this->buildGroup(). " ". $this->buildSort() ." " . $this->buildLimit();
+		return "SELECT ".$cols." FROM ".$qc.$this->getTable().$qc." ".$this->buildJoin(). " ".$this->buildWhere($whereQ). " ". $this->buildGroup(). " ". $this->buildSort() ." " . $this->buildLimit();
 	}
 
 	public function buildCountSelect($whereQ='') {
+		$db     = Metrodb_Connector::getHandle(NULL, $this->_table);
+		$qc     = $db->qc;
+
 		$cols = 'count(*) as total_rec';
-		return "SELECT ".$cols." FROM ".$this->getTable()." ".$this->buildJoin(). " ".$this->buildWhere($whereQ). " ". $this->buildGroup(). " ". $this->buildSort() ;
+		return "SELECT ".$cols." FROM ".$qc.$this->getTable().$qc." ".$this->buildJoin(). " ".$this->buildWhere($whereQ). " ". $this->buildGroup(). " ". $this->buildSort() ;
 	}
 
 
