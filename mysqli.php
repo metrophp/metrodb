@@ -257,24 +257,21 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 	 *
 	 * @return mixed
 	 */
-	function getInsertID() {
+	public function getInsertID() {
 		return mysqli_insert_id($this->driverId);
 	}
-
 
 	/**
 	 * Return the number of rows affected by the last query
 	 *
 	 * @return int number of affected rows
 	 */
-	function getNumRows() {
+	public function getNumRows() {
 		$resID = count($this->resultSet) -1;
 		return @mysqli_num_rows($this->resultSet[$resID]);
 	}
 
-
-
-	function setType($type='ASSOC') {
+	public function setType($type='ASSOC') {
 		$this->prevType = $this->RESULT_TYPE;
 		if ($type=='ASSOC') {
 			$this->RESULT_TYPE = MYSQLI_ASSOC;
@@ -287,7 +284,7 @@ class Metrodb_Mysqli extends Metrodb_Connector {
 		}
 	}
 
-	function quote($val) {
+	public function quote($val) {
 		return mysqli_real_escape_string($this->driverId, $val);
 	}
 
